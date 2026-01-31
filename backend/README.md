@@ -4,18 +4,13 @@
 
 ```
 cd backend
-
-uv venv
-
-source .venv/bin/activate
-
-uv sync
 ```
 
 ## Run project
 Run with:
 ```
-flask run
+
+pixi run run
 ```
 
 This targets `app.py` by default.

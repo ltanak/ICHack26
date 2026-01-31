@@ -7,10 +7,12 @@ version = "0.1.0"
 
 [tasks]
 image_editing = "python -m ts-satfire.main"
+run = "flask run"
 
 [dependencies]
 python = ">=3.11"
 numpy = "*"
 pandas = "*"
 matplotlib = "*"
+Flask = "*"
 
