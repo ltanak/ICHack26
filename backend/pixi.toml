@@ -1,6 +1,6 @@
 [workspace]
 authors = ["ltanak <ltanakbusiness@outlook.com>"]
-channels = ["conda-forge"]
+channels = ["conda-forge", "pytorch"]
 name = "backend"
 platforms = ["linux-64", "osx-arm64"]
 version = "0.1.0"
@@ -15,6 +15,14 @@ python = ">=3.11"
 numpy = "*"
 pandas = "*"
 matplotlib = "*"
+<<<<<<< HEAD
 Flask = ">=3.1.2,<4"
 anthropic = ">=0.77.0,<0.78"
-
+pillow = "*"
+pytorch = "*"
+torchvision = "*"
+torchaudio = "*"
+monai = "*"
+tqdm = "*"
+wandb = "*"
+scikit-learn = "*"
