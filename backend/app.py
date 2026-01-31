@@ -2,18 +2,22 @@ from flask import Flask, request, jsonify
 from markupsafe import escape
 from typing import List
 import json
+from flask_cors import CORS
+
 
 from claude import sendPrompt
 from utils import MapPoint
 
+
 app = Flask(__name__)
+CORS(app)
 
 
 # GET mark locations
 @app.route('/points', methods=['GET'])
 def markLocations() -> List[MapPoint]:
     if request.method == 'GET':
-        with open('wildfires.json', 'r', encoding='utf-8') as f:
+        with open('resources/wildfires.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
 
             return jsonify(data)
