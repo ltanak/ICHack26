@@ -22,6 +22,7 @@ def markLocations() -> List[MapPoint]:
 
 
 # POST selected point
+@app.route('/summary', methods=['GET'])
 def getSummary(point: MapPoint):
     prompt = "PLACE_HOLDER"
 
