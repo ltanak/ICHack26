@@ -9,6 +9,7 @@ version = "0.1.0"
 ts_model = "python -m ts-satfire.main"
 run = "flask run"
 image_editing = "python -m image-editing.image"
+display = "python -m display_data.display"
 
 [dependencies]
 python = ">=3.11"
@@ -25,3 +26,5 @@ monai = "*"
 tqdm = "*"
 wandb = "*"
 scikit-learn = "*"
+geopandas = "*"
+imageio = "*"
