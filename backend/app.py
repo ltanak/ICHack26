@@ -1,16 +1,18 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from typing import List
 import json
 from flask_cors import CORS
 from satellite import get_satellite_image
 from claude import sendPrompt
 from utils import MapPoint
-
+from display_data.display import get_coords, get_image_path, save_image, overlay_image
+from pathlib import Path
 from markupsafe import escape
 from typing import List
 
 from claude import sendPrompt
 from utils import MapPoint
+
 
 app = Flask(__name__)
 CORS(app)
@@ -41,19 +43,25 @@ def getSatelliteImage():
         # get year from the request
         year = 1
 
-        coords = get_fire_coords_from_year(year)
+        coords = get_coords(year)
 
         out_file, width_px, height_px = get_satellite_image(
             min_lon=coords[0],
             min_lat=coords[1],
-            max_lon=coords[3],
-            max_lat=coords[4]
+            max_lon=coords[2],
+            max_lat=coords[3],
+            out_file=f"Datasets/satellite/{year}.png"
         )
 
+        # overlayed image path
+        overlay_path = overlay_image(year, Path(out_file))
 
+        # overlay image path
+        data = {
+            "overlay_path": str(overlay_path),
+            "width_px": width_px,
+            "height_px": height_px
+        }
 
-        # eventually
-        data = []
-
-        return jsonify(data)
+        return send_file(overlay_path, mimetype='image/png')
 

@@ -19,6 +19,10 @@ def get_coords(year: int) -> list[int]:
     return [min_long, min_lat, max_long, max_lat]
 
 def get_image_path(year: int) -> Path:
+    output_dir = Path("Datasets/images")
+    return output_dir / f"{year}.png"
+
+def get_satellite_path(year: int) -> Path:
     output_dir = Path("Datasets/Images")
     return output_dir / f"{year}.png"
 
@@ -50,47 +54,52 @@ def save_image(year: int):
     plt.close()
 
 
-def overlay_image(year: int, satellite_csv: Path, out):
-    path_img = get_image_path(year)
-    return apply_transparency(path_img, satellite_csv)
+def overlay_image(year: int, satellite_path: Path) -> Path:
+    """Overlay fire spread image on satellite image and return path to result."""
+    fire_path = get_image_path(year)
+    apply_transparency(satellite_path, fire_path, year=year)
+    
+    # Return path to the saved overlay
+    overlay_path = Path("display_data/overlays") / f"{year}_overlay.png"
+    return overlay_path
 
 # datasets_2017_dir = Path("Datasets/Snapshot/2020_Snapshot/")
 
-print(f"Found {len(gpkg_files)} GPKG files in Datasets 2017:")
-# Read the last file (final state)
-# gpkg_file = gpkg_files[-1]
-# print(f"\nReading: {gpkg_file.name}")
-gdf = gpd.read_file(gpkg_file, layer="perimeter")
-print(gdf.head())
+# print(f"Found {len(gpkg_files)} GPKG files in Datasets 2017:")
+# # Read the last file (final state)
+# # gpkg_file = gpkg_files[-1]
+# # print(f"\nReading: {gpkg_file.name}")
+# gdf = gpd.read_file(gpkg_file, layer="perimeter")
+# print(gdf.head())
 
-# Plot and save as image
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_axes([0, 0, 1, 1])  # Full figure, no margins
-gdf.plot(ax=ax, alpha=0.7, edgecolor='darkred', facecolor='red', linewidth=2)
+# # Plot and save as image
+# fig = plt.figure(figsize=(10, 10))
+# ax = fig.add_axes([0, 0, 1, 1])  # Full figure, no margins
+# gdf.plot(ax=ax, alpha=0.7, edgecolor='darkred', facecolor='red', linewidth=2)
 
-# Get bounds - use exact data bounds without padding
-bounds = gdf.total_bounds
-minx, miny, maxx, maxy = bounds
+# # Get bounds - use exact data bounds without padding
+# bounds = gdf.total_bounds
+# minx, miny, maxx, maxy = bounds
 
-# Set exact limits to data bounds
-ax.set_xlim(minx, maxx)
-ax.set_ylim(miny, maxy)
+# # Set exact limits to data bounds
+# ax.set_xlim(minx, maxx)
+# ax.set_ylim(miny, maxy)
 
-# Remove axes, labels, and ticks
-ax.axis('off')
+# # Remove axes, labels, and ticks
+# ax.axis('off')
 
-# Print corner coordinates
-print(f"\nCorner Coordinates:")
-print(f"Bottom-left (minx, miny): ({minx}, {miny})")
-print(f"Bottom-right (maxx, miny): ({maxx}, {miny})")
-print(f"Top-left (minx, maxy): ({minx}, {maxy})")
-print(f"Top-right (maxx, maxy): ({maxx}, {maxy})")
+# # Print corner coordinates
+# print(f"\nCorner Coordinates:")
+# print(f"Bottom-left (minx, miny): ({minx}, {miny})")
+# print(f"Bottom-right (maxx, miny): ({maxx}, {miny})")
+# print(f"Top-left (minx, maxy): ({minx}, {maxy})")
+# print(f"Top-right (maxx, maxy): ({maxx}, {maxy})")
 
-# Save to image file in display_data/output
-output_dir = Path(__file__).parent / "output"
-output_dir.mkdir(exist_ok=True)
-output_path = output_dir / f"{gpkg_file.stem}_spread.png"
-plt.savefig(output_path, dpi=300, facecolor='white')
-print(f"\nImage saved to: {output_path}")
-plt.close()
+# # Save to image file in display_data/output
+# output_dir = Path(__file__).parent / "output"
+# output_dir.mkdir(exist_ok=True)
+# output_path = output_dir / f"{gpkg_file.stem}_spread.png"
+# plt.savefig(output_path, dpi=300, facecolor='white')
+# print(f"\nImage saved to: {output_path}")
+# plt.close()
 
