@@ -27,6 +27,7 @@ def main():
         "-test"
     ]
     
+    
     print("DEBUG: sys.argv =", sys.argv)
     
     # Run the model
