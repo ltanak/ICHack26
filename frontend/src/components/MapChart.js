@@ -72,8 +72,8 @@ export default function MapChart() {
                         minZoom={1}
                         maxZoom={4}             // adjust max zoom
                         onMove={({ coordinates, zoom }) => {
-                            if (!coordinates) return;
                             setZoom(zoom);
+                            if (!coordinates) return;
                             const clamped = clampCentre(coordinates, zoom);
                             setCentre(clamped);
                         }}
