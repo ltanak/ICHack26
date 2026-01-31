@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from markupsafe import escape
 from typing import List
+import json
 
 from claude import sendPrompt
 from utils import MapPoint
@@ -8,18 +9,14 @@ from utils import MapPoint
 app = Flask(__name__)
 
 
-
 # GET mark locations
 @app.route('/points', methods=['GET'])
 def markLocations() -> List[MapPoint]:
     if request.method == 'GET':
-        data = [{
-            "name": "California",
-            "markerOffset": 15,
-            "coordinates": [-119.4179, 36.7783]
-        }]
-    
-        return jsonify(data)
+        with open('wildfires.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+            return jsonify(data)
 
 
 # POST selected point
