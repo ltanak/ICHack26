@@ -8,6 +8,7 @@ version = "0.1.0"
 [tasks]
 image_editing = "python -m ts-satfire.main"
 run = "flask run"
+krishna = "python -m Krishna.main"
 
 [dependencies]
 python = ">=3.11"
@@ -15,4 +16,3 @@ numpy = "*"
 pandas = "*"
 matplotlib = "*"
 Flask = "*"
-
