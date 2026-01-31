@@ -1,13 +1,14 @@
 [workspace]
 authors = ["ltanak <ltanakbusiness@outlook.com>"]
-channels = ["conda-forge"]
+channels = ["conda-forge", "pytorch"]
 name = "backend"
 platforms = ["linux-64", "osx-arm64"]
 version = "0.1.0"
 
 [tasks]
-image_editing = "python -m ts-satfire.main"
+ts_model = "python -m ts-satfire.main"
 run = "flask run"
+image_editing = "python -m image-editing.image"
 krishna = "python -m Krishna.main"
 
 [dependencies]
