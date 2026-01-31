@@ -9,6 +9,8 @@ version = "0.1.0"
 ts_model = "python -m ts-satfire.main"
 run = "flask run"
 image_editing = "python -m image-editing.image"
+sim = "python -m Krishna.sim"
+geo_process = "python -m Krishna.geo_processing"
 display = "python -m display_data.display"
 
 [dependencies]
@@ -16,6 +18,9 @@ python = ">=3.11"
 numpy = "*"
 pandas = "*"
 matplotlib = "*"
+geopandas = "*"
+fiona = "*"
+
 Flask = ">=3.1.2,<4"
 anthropic = ">=0.77.0,<0.78"
 flask-cors = ">=6.0.2,<7"
