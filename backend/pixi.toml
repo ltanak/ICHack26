@@ -1,0 +1,16 @@
+[workspace]
+authors = ["ltanak <ltanakbusiness@outlook.com>"]
+channels = ["conda-forge"]
+name = "backend"
+platforms = ["linux-64", "osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+image_editing = "python -m ts-satfire.main"
+
+[dependencies]
+python = ">=3.11"
+numpy = "*"
+pandas = "*"
+matplotlib = "*"
+
