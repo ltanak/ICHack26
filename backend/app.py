@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify
-from markupsafe import escape
 from typing import List
 import json
 from flask_cors import CORS
-
-
+from satellite import get_satellite_image
 from claude import sendPrompt
 from utils import MapPoint
 
@@ -29,5 +27,27 @@ def getSummary(point: MapPoint):
 
     return sendPrompt(prompt)
 
-# request a summary for it 
- 
+
+@app.route('/satellite', methods=['GET'])
+def getSatelliteImage():
+    if request.method == 'GET':
+
+        # get year from the request
+        year = 1
+
+        coords = get_fire_coords_from_year(year)
+
+        out_file, width_px, height_px = get_satellite_image(
+            min_lon=coords[0],
+            min_lat=coords[1],
+            max_lon=coords[3],
+            max_lat=coords[4]
+        )
+
+
+
+        # eventually
+        data = []
+
+        return jsonify(data)
+
