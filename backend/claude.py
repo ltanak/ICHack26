@@ -18,3 +18,6 @@ def sendPrompt(prompt: str, max_tokens: int = 1000) -> str:
     )
 
     return message.content
+
+if __name__ == "__main__":
+    print("caluse")
