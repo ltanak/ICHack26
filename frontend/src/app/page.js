@@ -1,65 +1,94 @@
-import Image from "next/image";
+"use client"
+
+import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [position, setPosition] = useState({ coordinates: [0, 20], zoom: 1 });
+  const [markers, setMarkers] = useState([]);
+
+  useEffect(() => {
+    const fetchPoints = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/points");
+        const data = await res.json();
+        setMarkers(data);
+      } catch (err) {
+        console.error("Error loading points:", err);
+      }
+    };
+
+    fetchPoints();
+  }, []);
+
+
+  const handleMove = (newPosition) => {
+    setPosition(newPosition);
+  };
+
+  // const markers = [
+  //   {
+  //     markerOffset: -15,
+  //     name: "Buenos Aires",
+  //     coordinates: [-58.3816, -34.6037]
+  //   },
+  //   { markerOffset: -15, name: "La Paz", coordinates: [-68.1193, -16.4897] },
+  //   { markerOffset: 25, name: "Brasilia", coordinates: [-47.8825, -15.7942] },
+  //   { markerOffset: 25, name: "Santiago", coordinates: [-70.6693, -33.4489] },
+  //   { markerOffset: 25, name: "Bogota", coordinates: [-74.0721, 4.711] },
+  //   { markerOffset: 25, name: "Quito", coordinates: [-78.4678, -0.1807] },
+  //   { markerOffset: -15, name: "Georgetown", coordinates: [-58.1551, 6.8013] },
+  //   { markerOffset: -15, name: "Asuncion", coordinates: [-57.5759, -25.2637] },
+  //   { markerOffset: 25, name: "Paramaribo", coordinates: [-55.2038, 5.852] },
+  //   { markerOffset: 25, name: "Montevideo", coordinates: [-56.1645, -34.9011] },
+  //   { markerOffset: -15, name: "Caracas", coordinates: [-66.9036, 10.4806] },
+  //   { markerOffset: -15, name: "Lima", coordinates: [-77.0428, -12.0464] }
+  // ];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+      <section className="w-full h-[420px] sm:h-[500px] md:h-[600px] overflow-hidden bg-blue-50 p-0 m-0">
+        {/* <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40 pointer-events-none" /> */}
+        <ComposableMap
+        projection="geoMercator"
+        className="w-full h-full block"
+        style={{ display: "block", width: "100%", height: "100%" }}
+      >
+        <ZoomableGroup
+          zoom={position.zoom}
+          center={position.coordinates}
+          minZoom={1}
+          maxZoom={4}             // adjust max zoom
+          onMoveEnd={handleMove}  // updates position state
+        >
+          <Geographies geography="/countries-110m.json">
+            {({ geographies }) =>
+              geographies.map((geo) => (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  fill="var(--map-fill)"
+                  stroke="var(--map-stroke)"
+                  style={{
+                    default: { outline: "none" },
+                    hover: { fill: "#3b82f6", outline: "none" },
+                    pressed: { outline: "none" },
+                  }}
+                />
+              ))
+            }
+          </Geographies>
+          {markers.map(({ name, coordinates, markerOffset }) => (
+            <Marker key={name} coordinates={coordinates}>
+              <circle r={5} fill="#f43f5e" stroke="#fff" strokeWidth={2} />
+              <text textAnchor="middle" y={markerOffset} style={{ fontFamily: "system-ui", fill: "var(--foreground)", fontSize: "10px" }}>
+                {name}
+              </text>
+            </Marker>
+          ))}
+        </ZoomableGroup>
+      </ComposableMap>
+      </section>
     </div>
   );
 }
