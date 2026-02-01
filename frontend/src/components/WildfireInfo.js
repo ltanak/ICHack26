@@ -38,7 +38,9 @@ export default function WildfireInfo() {
             <WildfireSummary />
             <Divider />
             <div className="grid grid-cols-2">
-                <div style={{ 
+                <div>
+                    <h2 className="text-2xl text-bold text-center items-center mr-16">Overlay of True Wildfire Spread</h2>
+                    <div className="mt-6" style={{ 
                     position: 'relative', 
                     width: '800px', 
                     height: '600px',
@@ -139,10 +141,14 @@ export default function WildfireInfo() {
                         }}
                     />
                 </div>
+                </div>
         
-                
+                <div>
+                    <h2 className="text-2xl text-bold items-center text-center">Percolation Theory-based Prediction</h2>
                 <WildfireSimulation gridMode={true}/>
+                </div>
             </div>
+            <h2 className="text-2xl text-bold items-center text-center items-center mt-4">Wildfire Mitigation Resource Allocator</h2>
             <WildfireMitigation />
         </div>
     );
