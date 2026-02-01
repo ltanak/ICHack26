@@ -91,6 +91,30 @@ def overlay_image(year: int, satellite_path: Path, gpkg_filename: str = None) ->
     
     return overlay_path, fire_image_path
 
+def overlay_from_paths(base_image_path: Path, overlay_image_path: Path, alpha: int = 192) -> Path:
+    """Overlay two images given their paths and save in the same directory as the base image.
+    
+    Args:
+        base_image_path: Path to the base/background image
+        overlay_image_path: Path to the image to overlay on top
+        alpha: Transparency value for overlay (0-255, default 192)
+    
+    Returns:
+        Path to the created overlay image
+    """
+    base_path = Path(base_image_path)
+    overlay_path = Path(overlay_image_path)
+    
+    # Create output filename and path in same directory as base image
+    output_filename = f"{base_path.stem}_with_{overlay_path.stem}_overlay.png"
+    output_path = base_path.parent / output_filename
+    
+    # Create overlay using transparency
+    editor = ImageEditor(base_path, overlay_path)
+    editor.transparency(alpha=alpha, output_name=output_filename, output_dir=base_path.parent)
+    
+    return output_path
+
 def get_snapshots(year: int) -> list:
     """Get list of all GPKG snapshot filenames for a year."""
     path = Path(f"Datasets/Snapshot/{year}_Snapshot/")
@@ -247,11 +271,16 @@ def match_fires_by_date(year: int):
 
 if __name__ == "__main__":
     # Match fires by date
-    matches = match_fires_by_date(2020)
+    # matches = match_fires_by_date(2020)
+    overlay_from_paths(
+        base_image_path="backend/Datasets/images/2020.png"
+        
+    )
+
     # #     print(f"  {key}: {val}")
     # print(api_call(2020))
     # print(get_info(2020))
-    print(matches)
+    # print(matches)
     
     # Uncomment below to test API (may fail if endpoint is down)
     # result = api_call(2020)
