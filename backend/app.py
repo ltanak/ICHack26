@@ -41,7 +41,7 @@ def getSatelliteImage():
     if request.method == 'GET':
 
         # get year from the request
-        year = 1
+        year = 2017
 
         # base imagee
         coords = get_coords(year)
@@ -51,18 +51,12 @@ def getSatelliteImage():
             min_lat=coords[1],
             max_lon=coords[2],
             max_lat=coords[3],
-            out_file=f"Datasets/satellite/{year}.png"
+            out_file=f"Datasets/satellites/{year}.png"
         )
 
         # overlayed image path
         overlay_path = overlay_image(year, Path(out_file))
-
-        # overlay image path
-        data = {
-            "overlay_path": str(overlay_path),
-            "width_px": width_px,
-            "height_px": height_px
-        }
+        print(overlay_path)
 
         return send_file(overlay_path, mimetype='image/png')
 

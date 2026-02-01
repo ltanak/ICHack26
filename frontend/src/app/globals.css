@@ -3,8 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --map-fill: #121214;
-  --map-stroke: #29292B;
+  --map-fill: oklch(96.2% 0.044 156.743);
+  --map-stroke: oklch(49.56% 0.03803 161.17);
 }
 
 @theme inline {
@@ -14,14 +14,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
     --map-fill: #EAEAEC;
     --map-stroke: #D6D6DA;
   }
-}
+} */
 
 body {
   background: var(--background);
