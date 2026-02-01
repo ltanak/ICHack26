@@ -18,7 +18,7 @@ const COLORS = {
   OUTSIDE: '#FFFFFF'      // white for outside California
 };
 
-const WildfireSimulation = ({ gridMode = false }) => {
+const WildfireSimulation = ({ gridMode = false, onLoaded }) => {
   // Simulation state
   const [sessionId, setSessionId] = useState(null);
   const [grid, setGrid] = useState(null);
@@ -26,6 +26,7 @@ const WildfireSimulation = ({ gridMode = false }) => {
   const [gridShape, setGridShape] = useState([0, 0]);
   const [isRunning, setIsRunning] = useState(false);
   const [hasBurning, setHasBurning] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Monte Carlo state
   const [monteCarloMode, setMonteCarloMode] = useState(false);
@@ -84,10 +85,16 @@ const WildfireSimulation = ({ gridMode = false }) => {
       } else {
         setIsRunning(false);
       }
+      
+      // Mark as initialized and call onLoaded callback
+      setIsInitialized(true);
+      if (onLoaded) {
+        onLoaded();
+      }
     } catch (error) {
       console.error('Failed to initialize simulation:', error);
     }
-  }, [pTree, mode, customFires]);
+  }, [pTree, mode, customFires, onLoaded]);
 
   const hasBurningRef = useRef(hasBurning);
 

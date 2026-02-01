@@ -5,7 +5,7 @@ import WildfireSimulation from "./WildfireSimulation";
 import WildfireMitigation from "./WildfireMitigation";
 import TFTVisualization from "./TFTVisualization";
 import { Button, Flex, Splitter, Switch, Typography } from 'antd';
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 const yearImageMap = {
   "2017": "/2017.png",
@@ -17,11 +17,18 @@ const yearImageMap = {
 export default function WildfireInfo() {
     const selectedPoint = useSelector((state) => state.points.selectedPoint);
     const [sizes, setSizes] = useState([50, 50]);
+    const [showPercolation, setShowPercolation] = useState(true);
+    const [showTFT, setShowTFT] = useState(false);
 
     const satelliteSrc = useMemo(() => {
         const ts = Date.now(); // new timestamp ONLY when year changes
         return `http://127.0.0.1:5001/satellite/?year=${selectedPoint?.year}&t=${ts}`;
     }, [selectedPoint?.year]);
+
+    // Callback when Percolation Theory finishes loading
+    const handlePercolationLoaded = () => {
+        setShowTFT(true);
+    };
 
     if (!selectedPoint) {
         return (
@@ -146,7 +153,7 @@ export default function WildfireInfo() {
         
                 <div>
                     <h2 className="text-2xl text-bold items-center text-center">Percolation Theory-based Prediction</h2>
-                <WildfireSimulation gridMode={true}/>
+                    {showPercolation && <WildfireSimulation gridMode={true} onLoaded={handlePercolationLoaded}/>}
                 </div>
             </div>
             <h2 className="text-2xl text-bold items-center text-center items-center mt-4">Wildfire Mitigation Resource Allocator</h2>
@@ -259,7 +266,7 @@ export default function WildfireInfo() {
                 </div>
                 <div>
                     <h2 className="text-2xl text-bold text-center items-center mb-4">TFT Model Prediction</h2>
-                    <TFTVisualization />
+                    {showTFT ? <TFTVisualization /> : <p className="text-gray-400">Loading...</p>}
                 </div>
             </div>
         </div>
