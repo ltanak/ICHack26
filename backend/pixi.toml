@@ -14,6 +14,7 @@ geo_process = "python -m Krishna.preprocess"
 display = "python -m display_data.display"
 historical = "python -m historical_sim.visualize"
 claude = "python -m claude.claude"
+simulation = "python -m Krishna.preprocess && python -m Krishna.visualize"
 preprocess_vegetation = "python vegetation_density.py"
 
 [dependencies]
