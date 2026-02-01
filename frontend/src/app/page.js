@@ -4,6 +4,7 @@ import { Divider, Layout } from "antd";
 import { useState } from "react";
 import MapChart from "../components/MapChart";
 import Sidebar from "@/components/Sidebar";
+import WildfireSimulation from "@/components/WildfireSimulation";
 import WildfireInfo from "@/components/WildfireInfo";
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -20,6 +21,7 @@ export default function Home() {
         <Content className="bg-slate-200! flex h-screen flex-col">
           <div className="overflow-hidden ">
             <MapChart />
+            <WildfireSimulation />
           </div>
           <Content className="bg-slate-200! flex">
             <WildfireInfo />

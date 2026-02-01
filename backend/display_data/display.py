@@ -28,7 +28,7 @@ def get_image_path(year: int) -> Path:
     return output_dir / f"{year}.png"
 
 def get_satellite_path(year: int) -> Path:
-    output_dir = Path("Datasets/satellite")
+    output_dir = Path("Datasets/satellites")
     return output_dir / f"{year}.png"
 
 def save_image(year: int):

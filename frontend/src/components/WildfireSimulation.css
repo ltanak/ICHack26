@@ -1,0 +1,227 @@
+.wildfire-simulation {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.wildfire-simulation h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.simulation-container {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.canvas-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.canvas-container canvas {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.status {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  text-align: center;
+  min-height: 40px;
+}
+
+.status p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.controls {
+  width: 320px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.controls h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 16px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 8px;
+}
+
+.control-group {
+  margin-bottom: 20px;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 14px;
+}
+
+.control-group input[type="range"] {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.control-group input[type="radio"] {
+  margin-right: 8px;
+}
+
+.wind-direction label {
+  display: inline-block;
+  margin-right: 15px;
+  margin-bottom: 8px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.button-group button {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #4CAF50;
+  color: white;
+}
+
+.button-group button:hover:not(:disabled) {
+  background-color: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.button-group button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button-group button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.button-group button:nth-child(2) {
+  background-color: #ff9800;
+}
+
+.button-group button:nth-child(2):hover:not(:disabled) {
+  background-color: #e68900;
+}
+
+.button-group button:nth-child(3) {
+  background-color: #2196F3;
+}
+
+.button-group button:nth-child(3):hover:not(:disabled) {
+  background-color: #0b7dda;
+}
+
+.legend {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 2px solid #ddd;
+}
+
+.legend h3 {
+  border-bottom: none;
+  margin-bottom: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.legend-color {
+  width: 30px;
+  height: 20px;
+  border: 1px solid #333;
+  margin-right: 10px;
+  border-radius: 3px;
+}
+
+.legend-item span {
+  font-size: 14px;
+  color: #555;
+}
+
+.instructions {
+  background-color: #fff3cd;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.instructions h3 {
+  margin-top: 0;
+  color: #856404;
+}
+
+.instructions ul {
+  margin: 10px 0;
+  padding-left: 25px;
+}
+
+.instructions li {
+  margin-bottom: 8px;
+  color: #856404;
+  line-height: 1.5;
+}
+
+.instructions strong {
+  color: #664d03;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .simulation-container {
+    flex-direction: column;
+  }
+  
+  .controls {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .canvas-container canvas {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Loading animation for Monte Carlo */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+button:disabled {
+  animation: pulse 1.5s ease-in-out infinite;
+}

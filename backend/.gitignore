@@ -1,3 +1,7 @@
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# Vegetation 
+backend/Datasets/vegetation/*
+backend/output/*
