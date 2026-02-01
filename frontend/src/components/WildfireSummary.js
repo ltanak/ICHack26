@@ -14,10 +14,6 @@ export default function WildfireSummary() {
     const loadingMessages = [
         "Generating summary...",
         "Processing fire details...", 
-        "Analyzing satellite data...",
-        "Calculating risk factors...",
-        "Compiling environmental data...",
-        "Preparing comprehensive report..."
     ];
     
     const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
