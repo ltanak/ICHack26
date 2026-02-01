@@ -1,8 +1,10 @@
 import geopandas as gpd
 import pathlib
 from pathlib import Path
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for Flask
 import matplotlib.pyplot as plt
-from image_editing.image import apply_transparency
+from image_editing.image import apply_transparency, ImageEditor
 import json
 import geopandas as gpd
 import requests
@@ -31,9 +33,15 @@ def get_satellite_path(year: int) -> Path:
     output_dir = Path("Datasets/satellites")
     return output_dir / f"{year}.png"
 
-def save_image(year: int):
+def save_image(year: int, gpkg_filename: str = None):
+    """Save fire spread image for a specific GPKG file or the final one."""
     path = Path(f"Datasets/Snapshot/{year}_Snapshot/")
-    gpkg_file = sorted(path.glob("*.gpkg"))[-1]
+    
+    if gpkg_filename:
+        gpkg_file = path / gpkg_filename
+    else:
+        gpkg_file = sorted(path.glob("*.gpkg"))[-1]
+    
     gdf = gpd.read_file(gpkg_file, layer="perimeter")
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_axes([0, 0, 1, 1])  # Full figure, no margins
@@ -57,16 +65,37 @@ def save_image(year: int):
     plt.savefig(output_path, dpi=300, facecolor='white')
     print(f"\nImage saved to: {output_path}")
     plt.close()
-
-
-def overlay_image(year: int, satellite_path: Path) -> Path:
-    """Overlay fire spread image on satellite image and return path to result."""
-    fire_path = get_image_path(year)
-    apply_transparency(satellite_path, fire_path, year=year)
     
-    # Return path to the saved overlay
-    overlay_path = Path("display_data/overlays") / f"{year}_overlay.png"
-    return overlay_path
+    return output_path
+
+
+def overlay_image(year: int, satellite_path: Path, gpkg_filename: str = None) -> tuple[Path, Path]:
+    """Overlay fire spread image on satellite image and return (overlay_path, fire_image_path)."""
+    fire_image_path = save_image(year, gpkg_filename)
+    
+    # Determine output filename
+    if gpkg_filename:
+        stem = Path(gpkg_filename).stem
+        overlay_filename = f"{stem}_overlay.png"
+    else:
+        stem = str(year)
+        overlay_filename = f"{year}_overlay.png"
+    
+    overlay_dir = Path("display_data/overlays")
+    overlay_dir.mkdir(exist_ok=True)
+    overlay_path = overlay_dir / overlay_filename
+    
+    # Create overlay using transparency
+    editor = ImageEditor(satellite_path, fire_image_path)
+    editor.transparency(alpha=192, output_name=overlay_filename, output_dir=overlay_dir)
+    
+    return overlay_path, fire_image_path
+
+def get_snapshots(year: int) -> list:
+    """Get list of all GPKG snapshot filenames for a year."""
+    path = Path(f"Datasets/Snapshot/{year}_Snapshot/")
+    gpkg_files = sorted(path.glob("*.gpkg"))
+    return [f.name for f in gpkg_files]
 
 def get_info(year: int):
     path = Path(f"Datasets/Snapshot/{year}_Snapshot/")
