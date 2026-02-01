@@ -369,7 +369,7 @@ const WildfireSimulation = ({ gridMode = false, onLoaded }) => {
   // Initialize on mount
   useEffect(() => {
     initializeSimulation();
-  }, []);
+  }, [initializeSimulation]);
 
   // Handle parameter changes - reset simulation
   const handleReset = () => {
