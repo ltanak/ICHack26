@@ -93,11 +93,119 @@ class HistoricalFireSimulation:
         print(f"  Done! Total frames: {len(frames)}")
         return frames
         
+        self.update_display(0)
+    
+    def _load_california(self):
+        """Load California as vertices."""
+        try:
+            print("Loading California...")
+            states = gpd.read_file(
+                "https://naturalearth.s3.amazonaws.com/10m_cultural/ne_10m_admin_1_states_provinces.zip"
+            )
+            ca = states[states["name"] == "California"]
+            verts = []
+            for geom in ca.geometry:
+                verts.extend(geom_to_verts(geom))
+            
+            # Calculate bounds
+            all_coords = np.vstack(verts)
+            minx, miny = all_coords.min(axis=0)
+            maxx, maxy = all_coords.max(axis=0)
+            w, h = maxx - minx, maxy - miny
+            self.bounds = (minx - w*0.05, miny - h*0.05, maxx + w*0.05, maxy + h*0.05)
+            return verts
+        except Exception as e:
+            print(f"Warning: {e}")
+            self.bounds = (-124.5, 32.5, -114.0, 42.0)
+            return []
+    
+    def _add_vegetation_background(self):
+        """Add realistic vegetation density as background."""
+        try:
+            # Import the realistic vegetation functions
+            import sys
+            from pathlib import Path
+            sys.path.insert(0, str(Path(__file__).parent.parent))
+            from Krishna.simulation import load_masks, load_dense_areas, create_vegetation_probability_map
+            
+            # Extract year from folder name (e.g., "2017_Snapshot" -> 2017)
+            year_str = self.folder_name.split('_')[0]
+            year = int(year_str) if year_str.isdigit() else 2020
+            
+            # Load vegetation data
+            ca_mask, _, bounds = load_masks()
+            dense_coords, radius_deg = load_dense_areas(year=year, threshold=10.0)
+            
+            # Create probability map
+            prob_map = create_vegetation_probability_map(
+                ca_mask, bounds, dense_coords, radius_deg,
+                base_prob=0.8, dense_prob=1.0, min_prob=0.8
+            )
+            
+            # Display as background image
+            minx, miny, maxx, maxy = bounds
+            self.ax.imshow(
+                prob_map,
+                extent=(minx, maxx, miny, maxy),
+                origin='lower',
+                cmap='Greens',
+                alpha=0.6,
+                vmin=0,
+                vmax=1,
+                zorder=0
+            )
+            print(f"Added vegetation background for year {year}")
+        except Exception as e:
+            print(f"Could not load vegetation background: {e}")
+    
+    def _build_cache(self):
+        """Build cumulative vertex cache for instant playback."""
+        files = get_sorted_files(self.folder_path)
+        self.cumulative_verts = []  # Pre-computed cumulative for each frame
+        self.frame_dates = []
+        
+        accumulated = []
+        for i, f in enumerate(files):
+            if (i + 1) % 100 == 0:
+                print(f"  {i + 1}/{len(files)}...")
+            
+            dt, p = parse_filename(f.name)
+            date_str = dt.strftime('%B %d, %Y') + f" {p}" if dt else f.stem
+            self.frame_dates.append(date_str)
+            
+            try:
+                gdf = gpd.read_file(f, layer="perimeter")
+                gdf = gdf[gdf.geometry.notna()]
+                for geom in gdf.geometry:
+                    accumulated.extend(geom_to_verts(geom))
+            except:
+                pass
+            
+            # Store a copy of accumulated state at this frame
+            self.cumulative_verts.append(list(accumulated))
+        
+        with open(self.cache_file, 'wb') as f:
+            pickle.dump({'cumulative': self.cumulative_verts, 'dates': self.frame_dates}, f)
+        print("Cache saved!")
+    
+    def _load_cache(self):
+        with open(self.cache_file, 'rb') as f:
+            data = pickle.load(f)
+        self.cumulative_verts = data['cumulative']
+        self.frame_dates = data['dates']
+    
     def setup_plot(self):
         """Create the main plot and colormap."""
         self.fig, self.ax = plt.subplots(figsize=(10, 8))
         plt.subplots_adjust(bottom=0.15, left=0.1, right=0.95, top=0.9)
         self.ax.axis("off")
+        self.ax.set_facecolor('white')
+        
+        self.ax.set_xlim(self.bounds[0], self.bounds[2])
+        self.ax.set_ylim(self.bounds[1], self.bounds[3])
+        
+        # Add realistic vegetation background
+        self._add_vegetation_background()
         self.ax.set_title("Historical Simulation", fontsize=16, pad=10)
         
         # Colormap: grey=empty, green=tree, red=burning, brown=burnt
@@ -127,6 +235,67 @@ class HistoricalFireSimulation:
         
         # Connect callback
         self.time_slider.on_changed(self.on_time_change)
+        # California (static)
+        if self.ca_verts:
+            ca_coll = PolyCollection(self.ca_verts, facecolor='none',
+                                     edgecolor='darkgreen', linewidth=2, alpha=0.9)
+            self.ax.add_collection(ca_coll)
+        
+        # Fire collection (updated each frame)
+        self.fire_coll = PolyCollection([], facecolor='red',
+                                        edgecolor='darkred', alpha=0.8)
+        self.ax.add_collection(self.fire_coll)
+        
+        year = self.folder_name.split('_')[0]
+        self.title = self.ax.set_title(f"California Wildfires - {year}", fontsize=14)
+        
+        # Controls
+        self.slider = Slider(plt.axes([0.2, 0.06, 0.6, 0.03]), 'Frame',
+                            0, len(self.cumulative_verts)-1, valinit=0, valstep=1)
+        self.slider.on_changed(self.on_slider)
+        
+        self.play_btn = Button(plt.axes([0.2, 0.01, 0.12, 0.04]), 'Play')
+        self.play_btn.on_clicked(self.toggle_play)
+        
+        Button(plt.axes([0.35, 0.01, 0.12, 0.04]), 'Reset').on_clicked(self.reset)
+        Button(plt.axes([0.5, 0.01, 0.12, 0.04]), 'Faster').on_clicked(lambda e: self.speed(-20))
+        Button(plt.axes([0.65, 0.01, 0.12, 0.04]), 'Slower').on_clicked(lambda e: self.speed(20))
+        
+        self.is_playing = False
+        self.animation = None
+        self.interval = ANIMATION_INTERVAL
+    
+    def update_display(self, idx):
+        idx = int(idx) % len(self.cumulative_verts)
+        self.current_frame = idx
+        
+        # Just use pre-computed cumulative data - instant!
+        self.fire_coll.set_verts(self.cumulative_verts[idx])
+        
+        year = self.folder_name.split('_')[0]
+        self.title.set_text(f"California Wildfires - {year}\n{self.frame_dates[idx]}")
+        
+        self.slider.eventson = False
+        self.slider.set_val(idx)
+        self.slider.eventson = True
+        
+        return [self.fire_coll, self.title]
+    
+    def on_slider(self, val):
+        if not self.is_playing:
+            self.update_display(int(val))
+            self.fig.canvas.draw_idle()
+    
+    def toggle_play(self, event):
+        if self.is_playing:
+            self.is_playing = False
+            self.play_btn.label.set_text('Play')
+            if self.animation:
+                self.animation.event_source.stop()
+        else:
+            self.is_playing = True
+            self.play_btn.label.set_text('Pause')
+            self.start_anim()
     
     def on_time_change(self, val):
         """Handle time slider changes."""

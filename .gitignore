@@ -3,3 +3,15 @@ __pycache__/
 *.pyc
 *.pyo
 /backend/pixi.lock
+
+# Generated images and overlays
+/backend/display_data/overlays/
+/backend/display_data/output/
+/backend/Datasets/satellites/
+
+# Large cached/build files
+/backend/.pixi/
+/backend/Datasets/
+/backend/historical_sim/cache/
+/frontend/.next/
+/frontend/node_modules/
