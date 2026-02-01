@@ -22,7 +22,11 @@ export default function WildfireInfo() {
             <WildfireSummary />
             <Divider />
             <div className="grid grid-cols-2">
-                <WildfireSimulation gridMode={true}/>
+                <img
+                    src={`http://127.0.0.1:5001/satellite`}
+                    alt="Satellite view"
+                    className="w-full h-auto"
+                />
                 <WildfireSimulation gridMode={true}/>
             </div>
         </div>
