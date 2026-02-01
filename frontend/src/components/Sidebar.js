@@ -46,7 +46,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                     />
                 </div>
             </div>
-            <WildfireSimulation />
         </div>
     )
 }
