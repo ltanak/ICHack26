@@ -30,7 +30,9 @@ def get_historical_summary(year, max_tokens = 500) -> str:
     Total Acres Burned: {fire_data['acres_burned']:,}
     Tracked Snapshots: {fire_data.get('summary', {}).get('total_snapshots', 0)}
 
-    Please provide a 2-3 sentence summary covering the fire's significance, impact, and any notable characteristics."""
+    Please provide a 2-3 sentence summary covering the fire's significance, impact, and any notable characteristics.
+    
+    Do not use markdown."""
     
     response = sendPrompt(prompt, max_tokens)
     # print(response[0].text)

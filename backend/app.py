@@ -47,7 +47,6 @@ def getSummary(year: int):
     global YEAR
     res = get_historical_summary(year=year)
     YEAR = year
-    print(f"========== SUMMARY: YEAR set to {YEAR} ==========")
 
     # For now just return Lorum Ipsum to save API calls
     # Wait to simulate api response time
@@ -68,14 +67,8 @@ def getSatelliteImage():
     global YEAR
     try:
         # get year from the request
-        print(f"========== SATELLITE REQUEST ==========")
-        print(f"Global YEAR: {YEAR}")
         year = request.args.get('year', default=YEAR, type=int)
-        print(f"Request year param: {request.args.get('year')}")
-        print(f"Using year: {year}")
         snapshot = request.args.get('snapshot', default=None, type=str)
-        print(f"Snapshot: {snapshot}")
-        print(f"=======================================")
 
         # Serve cached overlay if available
         cache_key = (year, snapshot)
