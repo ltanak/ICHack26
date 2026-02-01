@@ -9,7 +9,39 @@ export default function WildfireSummary() {
     const { data: pointSummary, error, isFetching } = useGetPointSummaryQuery(encodeURIComponent(selectedPoint?.name), {
         skip: !selectedPoint,
     });
-    // const [textToAnimate, setTextToAnimate] = useState("");
+    
+    // Dynamic loading messages
+    const loadingMessages = [
+        "Generating summary...",
+        "Processing fire details...", 
+        "Analyzing satellite data...",
+        "Calculating risk factors...",
+        "Compiling environmental data...",
+        "Preparing comprehensive report..."
+    ];
+    
+    const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+    
+    // Cycle through loading messages
+    useEffect(() => {
+        if (!isFetching) return;
+        
+        const interval = setInterval(() => {
+            setCurrentMessageIndex((prevIndex) => 
+                (prevIndex + 1) % loadingMessages.length
+            );
+        }, 2000); // Change message every 2 seconds
+        
+        return () => clearInterval(interval);
+    }, [isFetching, loadingMessages.length]);
+    
+    // Reset message index when starting to fetch
+    useEffect(() => {
+        if (isFetching) {
+            setCurrentMessageIndex(0);
+        }
+    }, [isFetching]);
+    
     const animatedText = useAnimatedText(pointSummary || "");
 
     if (!selectedPoint) {
@@ -26,9 +58,21 @@ export default function WildfireSummary() {
             {isFetching && (
                 <div className="flex flex-col items-center justify-center mt-8 animate-fade-in">
                     <div className="w-8 h-8 border-4 border-slate-300 border-t-indigo-500 rounded-full animate-spin mb-3"></div>
-                    <p className="text-slate-700 text-lg font-medium">
-                        Generating summary...
+                    <p className="text-slate-700 text-lg font-medium transition-all duration-500 ease-in-out">
+                        {loadingMessages[currentMessageIndex]}
                     </p>
+                    <div className="flex space-x-1 mt-2">
+                        {loadingMessages.map((_, index) => (
+                            <div
+                                key={index}
+                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                    index === currentMessageIndex 
+                                        ? 'bg-indigo-500 scale-125' 
+                                        : 'bg-slate-300'
+                                }`}
+                            />
+                        ))}
+                    </div>
                 </div>
             )}
             {error && (
