@@ -15,8 +15,15 @@ const COLORS = {
   [TREE]: '#228B22',      // green
   [BURNING]: '#FF0000',   // red
   [BURNT]: '#CD853F',     // peru/brown
-  OUTSIDE: '#FFFFFF'      // white for outside California
+  OUTSIDE: '#FFFFFF',     // white for outside California
+  RETARDANT: '#00FFFF',   // cyan for retardant zones
+  CLEARED: '#FFA500'      // orange for cleared zones
 };
+
+// Mitigation zone defaults (matching Python visualize.py)
+const RETARDANT_RADIUS = 10;
+const CLEAR_WIDTH = 18;
+const CLEAR_HEIGHT = 9;
 
 const WildfireSimulation = ({ gridMode = false }) => {
   // Simulation state
@@ -41,6 +48,11 @@ const WildfireSimulation = ({ gridMode = false }) => {
   
   // Custom fire points
   const [customFires, setCustomFires] = useState([]);
+  
+  // Mitigation zones state
+  const [mitigationMode, setMitigationMode] = useState('None'); // 'None', 'Retardant', 'Clear'
+  const [retardantZones, setRetardantZones] = useState([]); // [{y, x, radius}, ...]
+  const [clearedZones, setClearedZones] = useState([]); // [{y, x, width, height}, ...]
   
   // Canvas ref
   const canvasRef = useRef(null);
@@ -158,6 +170,10 @@ const WildfireSimulation = ({ gridMode = false }) => {
     setIsRunning(false);
     
     try {
+      // Convert mitigation zones to backend format
+      const retardantZonesData = retardantZones.map(z => [z.y, z.x, z.radius]);
+      const clearedZonesData = clearedZones.map(z => [z.y, z.x, z.width, z.height]);
+      
       const response = await fetch(`http://127.0.0.1:5001/api/monte-carlo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,7 +184,9 @@ const WildfireSimulation = ({ gridMode = false }) => {
           wind_dir: windDir,
           wind_strength: windStrength,
           mode: mode,
-          custom_fires: customFires
+          custom_fires: customFires,
+          retardant_zones: retardantZonesData,
+          cleared_zones: clearedZonesData
         })
       });
       
@@ -211,7 +229,7 @@ const WildfireSimulation = ({ gridMode = false }) => {
     } finally {
       setIsLoadingMC(false);
     }
-  }, [pTree, ignitionProb, windDir, windStrength, mode, customFires]);
+  }, [pTree, ignitionProb, windDir, windStrength, mode, customFires, retardantZones, clearedZones]);
 
   // Draw grid on canvas
   const drawGrid = useCallback(() => {
@@ -276,6 +294,41 @@ const WildfireSimulation = ({ gridMode = false }) => {
         }
       }
       console.log('Cells drawn:', cellsDrawn, 'Mask ones found:', maskOnes);
+      
+      // Draw mitigation zones on Monte Carlo heatmap (inline)
+      // Draw retardant zones (cyan dashed circles)
+      ctx.strokeStyle = COLORS.RETARDANT;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      
+      for (const zone of retardantZones) {
+        const zoneCanvasX = zone.x * cellSize;
+        const zoneCanvasY = (N - 1 - zone.y) * cellSize;
+        const zoneCanvasRadius = zone.radius * cellSize;
+        
+        ctx.beginPath();
+        ctx.arc(zoneCanvasX, zoneCanvasY, zoneCanvasRadius, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+      
+      // Draw cleared zones (orange dashed ellipses)
+      ctx.strokeStyle = COLORS.CLEARED;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      
+      for (const zone of clearedZones) {
+        const zoneCanvasX = zone.x * cellSize;
+        const zoneCanvasY = (N - 1 - zone.y) * cellSize;
+        const zoneWidth = zone.width * cellSize;
+        const zoneHeight = zone.height * cellSize;
+        
+        ctx.beginPath();
+        ctx.ellipse(zoneCanvasX, zoneCanvasY, zoneWidth / 2, zoneHeight / 2, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+      
+      // Reset line dash
+      ctx.setLineDash([]);
     } else {
       // Draw regular grid
       for (let i = 0; i < N; i++) {
@@ -293,6 +346,41 @@ const WildfireSimulation = ({ gridMode = false }) => {
           }
         }
       }
+      
+      // Draw mitigation zones on regular grid (inline)
+      // Draw retardant zones (cyan dashed circles)
+      ctx.strokeStyle = COLORS.RETARDANT;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      
+      for (const zone of retardantZones) {
+        const zoneCanvasX = zone.x * cellSize;
+        const zoneCanvasY = (N - 1 - zone.y) * cellSize;
+        const zoneCanvasRadius = zone.radius * cellSize;
+        
+        ctx.beginPath();
+        ctx.arc(zoneCanvasX, zoneCanvasY, zoneCanvasRadius, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+      
+      // Draw cleared zones (orange dashed ellipses)
+      ctx.strokeStyle = COLORS.CLEARED;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      
+      for (const zone of clearedZones) {
+        const zoneCanvasX = zone.x * cellSize;
+        const zoneCanvasY = (N - 1 - zone.y) * cellSize;
+        const zoneWidth = zone.width * cellSize;
+        const zoneHeight = zone.height * cellSize;
+        
+        ctx.beginPath();
+        ctx.ellipse(zoneCanvasX, zoneCanvasY, zoneWidth / 2, zoneHeight / 2, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+      
+      // Reset line dash
+      ctx.setLineDash([]);
     }
     
     // Draw grid lines (optional, for small grids)
@@ -311,12 +399,10 @@ const WildfireSimulation = ({ gridMode = false }) => {
         ctx.stroke();
       }
     }
-  }, [grid, mask, gridShape, cellSize, monteCarloMode, monteCarloData]);
+  }, [grid, mask, gridShape, cellSize, monteCarloMode, monteCarloData, retardantZones, clearedZones]);
 
   // Handle canvas click
   const handleCanvasClick = useCallback((e) => {
-    // if (mode !== 'custom' || isRunning || monteCarloMode) return;
-    
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -324,10 +410,24 @@ const WildfireSimulation = ({ gridMode = false }) => {
     const canvasX = (e.clientX - rect.left) * scaleX;
     const canvasY = (e.clientY - rect.top) * scaleY;
     const x = Math.floor(canvasX / cellSize);
-    const y = Math.floor(canvasY / cellSize);
+    const N = gridShape[0];
+    // Convert canvas Y to grid Y (flip coordinate system)
+    const y = N - 1 - Math.floor(canvasY / cellSize);
     
-    addFire(y, x);
-  }, [mode, isRunning, monteCarloMode, cellSize, addFire]);
+    // Handle based on mitigation mode
+    if (mitigationMode === 'Retardant') {
+      // Add retardant zone
+      setRetardantZones([...retardantZones, { y, x, radius: RETARDANT_RADIUS }]);
+      console.log(`Retardant applied at (${y}, ${x}) with radius ${RETARDANT_RADIUS}`);
+    } else if (mitigationMode === 'Clear') {
+      // Add cleared zone
+      setClearedZones([...clearedZones, { y, x, width: CLEAR_WIDTH, height: CLEAR_HEIGHT }]);
+      console.log(`Trees cleared at (${y}, ${x}) with size ${CLEAR_WIDTH}x${CLEAR_HEIGHT}`);
+    } else {
+      // Default: add fire
+      addFire(y, x);
+    }
+  }, [mode, isRunning, monteCarloMode, cellSize, addFire, mitigationMode, retardantZones, clearedZones, gridShape]);
 
 
   const runSimulation = useCallback(async () => {
@@ -367,6 +467,8 @@ const WildfireSimulation = ({ gridMode = false }) => {
   // Handle parameter changes - reset simulation
   const handleReset = () => {
     setCustomFires([]);
+    setRetardantZones([]);
+    setClearedZones([]);
     setIsRunning(false);
     initializeSimulation();
   };
@@ -390,7 +492,7 @@ const WildfireSimulation = ({ gridMode = false }) => {
             height={canvasHeight}
             onClick={handleCanvasClick}
             style={{ 
-              cursor: mode === 'custom' && !isRunning && !monteCarloMode ? 'crosshair' : 'default',
+              cursor: mitigationMode !== 'None' ? 'crosshair' : (mode === 'custom' && !isRunning && !monteCarloMode ? 'crosshair' : 'default'),
               border: '2px solid #333'
             }}
           />
@@ -499,6 +601,37 @@ const WildfireSimulation = ({ gridMode = false }) => {
             ))}
           </div>
           
+          <h3>Mitigation Strategy</h3>
+          <div className="control-group">
+            {['None', 'Retardant', 'Clear'].map((mitMode) => (
+              <label key={mitMode}>
+                <input
+                  type="radio"
+                  value={mitMode}
+                  checked={mitigationMode === mitMode}
+                  onChange={(e) => setMitigationMode(e.target.value)}
+                  disabled={isRunning || isLoadingMC}
+                />
+                {mitMode === 'Clear' ? 'Clear Trees' : mitMode}
+              </label>
+            ))}
+          </div>
+          {mitigationMode !== 'None' && (
+            <div className="mitigation-info" style={{ fontSize: '0.85em', color: '#666', marginTop: '5px' }}>
+              {mitigationMode === 'Retardant' && (
+                <p>Click to apply fire retardant (cyan circles). Reduces fire spread by 80%.</p>
+              )}
+              {mitigationMode === 'Clear' && (
+                <p>Click to clear vegetation (orange ellipses). Creates firebreaks.</p>
+              )}
+            </div>
+          )}
+          {(retardantZones.length > 0 || clearedZones.length > 0) && (
+            <div className="mitigation-status" style={{ fontSize: '0.85em', marginTop: '5px' }}>
+              <p>Retardant zones: {retardantZones.length} | Cleared zones: {clearedZones.length}</p>
+            </div>
+          )}
+          
           <h3>Actions</h3>
           <div className="button-group">
             <button
@@ -551,6 +684,8 @@ const WildfireSimulation = ({ gridMode = false }) => {
           <li><strong>Historic Run:</strong> Uses real fire start locations from data</li>
           <li><strong>Custom Run:</strong> Click on California to place your own fire points</li>
           <li><strong>Monte Carlo:</strong> Runs 20 simulations and shows burn probability heatmap</li>
+          <li><strong>Retardant:</strong> Click to apply fire retardant (reduces spread by 80%)</li>
+          <li><strong>Clear Trees:</strong> Click to clear vegetation and create firebreaks</li>
           <li>Adjust parameters to see how vegetation density, dryness, and wind affect fire spread</li>
         </ul>
       </div>
