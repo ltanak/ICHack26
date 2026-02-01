@@ -381,7 +381,7 @@ const WildfireSimulation = ({ gridMode = false }) => {
   return (
     <div className="wildfire-simulation">
       
-      <div className="simulation-container flex flex-col">
+      <div className="simulation-container ">
 
         <div className="canvas-container">
           <canvas
@@ -407,51 +407,8 @@ const WildfireSimulation = ({ gridMode = false }) => {
           </div>
         </div>
         
-        <div className='flex flex-col gap-x-2 items-center'>
-          <div className="button-group flex-row!">
-            <button
-              onClick={() => setIsRunning(!isRunning)}
-              disabled={!hasBurning || monteCarloMode || isLoadingMC}
-            >
-              {isRunning ? 'Pause' : 'Start'}
-            </button>
-            
-            <button
-              onClick={handleReset}
-              disabled={isLoadingMC}
-            >
-              Reset
-            </button>
-            
-            <button
-              onClick={runMonteCarlo}
-              disabled={isRunning || isLoadingMC}
-            >
-              {isLoadingMC ? 'Running...' : 'Monte Carlo'}
-            </button>
-          </div>
-          
-          <div className="legend flex flex-row gap-x-4 justify-center">
-            <h3>Legend</h3>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: COLORS[EMPTY] }}></div>
-              <span>Empty</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: COLORS[TREE] }}></div>
-              <span>Tree</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: COLORS[BURNING] }}></div>
-              <span>Burning</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: COLORS[BURNT] }}></div>
-              <span>Burnt</span>
-            </div>
-          </div>
-        </div>
-        {/* <div className="controls">
+        
+        <div className="controls">
           <h3>Parameters</h3>
           
 
@@ -585,16 +542,16 @@ const WildfireSimulation = ({ gridMode = false }) => {
               <span>Burnt</span>
             </div>
           </div>
-        </div> */}
+        </div>
       </div>
       
       <div className="instructions">
-        {/* <h3>Instructions</h3> */}
+        <h3>Instructions</h3>
         <ul>
-          {/* <li><strong>Historic Run:</strong> Uses real fire start locations from data</li>
-          <li><strong>Custom Run:</strong> Click on California to place your own fire points</li> */}
+          <li><strong>Historic Run:</strong> Uses real fire start locations from data</li>
+          <li><strong>Custom Run:</strong> Click on California to place your own fire points</li>
           <li><strong>Monte Carlo:</strong> Runs 20 simulations and shows burn probability heatmap</li>
-          {/* <li>Adjust parameters to see how vegetation density, dryness, and wind affect fire spread</li> */}
+          <li>Adjust parameters to see how vegetation density, dryness, and wind affect fire spread</li>
         </ul>
       </div>
     </div>

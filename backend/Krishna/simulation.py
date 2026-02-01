@@ -363,6 +363,10 @@ def monte_carlo_simulation(n_runs, p_tree, ignition_prob, wind_dir=(0, 0), wind_
     burn_counts = np.zeros_like(grid, dtype=float)
     
     print(f"Running {n_runs} Monte Carlo simulations...")
+    print(f"  Grid shape: {grid.shape}")
+    print(f"  Initial burning cells: {np.count_nonzero(grid == BURNING)}")
+    print(f"  Initial trees: {np.count_nonzero(grid == TREE)}")
+    
     for run in range(n_runs):
         if (run + 1) % 10 == 0:
             print(f"  Run {run + 1}/{n_runs}")
@@ -379,14 +383,21 @@ def monte_carlo_simulation(n_runs, p_tree, ignition_prob, wind_dir=(0, 0), wind_
                 if grid[y, x] == TREE:
                     grid[y, x] = BURNING
         
+        # Count initial burning cells
+        initial_burning = np.count_nonzero(grid == BURNING)
+        
         # Run simulation with mitigation zones
         final_grid = run_simulation(grid, ignition_prob, wind_dir, wind_strength, retardant_zones, cleared_zones)
         
         # Count burnt cells
+        burnt_cells = np.count_nonzero(final_grid == BURNT)
         burn_counts += (final_grid == BURNT)
+        
+        if run == 0:
+            print(f"  First run: {initial_burning} initial fires -> {burnt_cells} burnt cells")
     
     # Calculate probability
     burn_probability = burn_counts / n_runs
-    print("  Done!")
+    print(f"  Done! Total cells with burn probability > 0: {np.count_nonzero(burn_probability)}")
     
     return burn_probability

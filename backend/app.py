@@ -368,9 +368,9 @@ def run_monte_carlo():
     }
     """
     data = request.json
-    n_runs = data.get('n_runs', 100)
-    p_tree = data.get('p_tree', 0.6)
-    ignition_prob = data.get('ignition_prob', 0.7)
+    n_runs = data.get('n_runs', 20)
+    p_tree = data.get('p_tree', 0.8)
+    ignition_prob = data.get('ignition_prob', 0.8)
     wind_dir_name = data.get('wind_dir', 'None')
     wind_strength = data.get('wind_strength', 1.0)
     mode = data.get('mode', 'historic')
@@ -380,6 +380,9 @@ def run_monte_carlo():
     
     # Determine custom fire points
     custom_fire_points = custom_fires if mode == 'custom' else None
+    
+    print(f"Monte Carlo params: n_runs={n_runs}, p_tree={p_tree}, ignition_prob={ignition_prob}, mode={mode}")
+    print(f"Custom fire points: {custom_fire_points}")
     
     # Run Monte Carlo
     burn_prob = monte_carlo_simulation(
@@ -391,12 +394,27 @@ def run_monte_carlo():
         custom_fire_points=custom_fire_points
     )
     
-    # Get mask
-    _, ca_mask, _ = load_masks()
+    print(f"Burn probability stats: min={burn_prob.min()}, max={burn_prob.max()}, mean={burn_prob.mean()}")
+    print(f"Non-zero cells: {np.count_nonzero(burn_prob)}")
+    
+    # Get mask (ca_mask is first return value)
+    ca_mask, fire_mask, _ = load_masks()
+    
+    print(f"CA mask stats: sum={ca_mask.sum()}, shape={ca_mask.shape}")
+    print(f"Fire mask stats: sum={(fire_mask == BURNING).sum()}, shape={fire_mask.shape}")
+    
+    # Convert to lists for JSON serialization
+    prob_list = burn_prob.tolist()
+    mask_list = ca_mask.tolist()
+    
+    # Verify data before sending
+    print(f"Probability list type: {type(prob_list)}, len: {len(prob_list)}")
+    print(f"First row sample (first 10 values): {prob_list[0][:10]}")
+    print(f"Sample non-zero values from row 200: {[v for v in prob_list[200][100:150] if v > 0][:5]}")
     
     return jsonify({
-        'probability': burn_prob.tolist(),
-        'mask': ca_mask.tolist()
+        'probability': prob_list,
+        'mask': mask_list
     })
 
 
