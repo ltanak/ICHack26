@@ -38,14 +38,20 @@ export default function WildfireInfo() {
             <WildfireSummary />
             <Divider />
             <div className="grid grid-cols-2">
-                <div style={{ position: 'relative', width: '800px', height: '600px' }}>
+                <div style={{ 
+                    position: 'relative', 
+                    width: '800px', 
+                    height: '600px',
+                    userSelect: 'none'
+                }}>
                     {/* Base image (right side) - always visible */}
                     <div style={{ 
                         position: 'absolute',
                         left: 0,
                         top: 0,
                         width: '100%',
-                        height: '100%'
+                        height: '100%',
+                        pointerEvents: 'none'
                     }}>
                         <img
                             src={yearImageMap[selectedPoint.year] || "/2020.png"}
@@ -53,7 +59,8 @@ export default function WildfireInfo() {
                             style={{
                                 width: '100%',
                                 height: '100%',
-                                objectFit: 'cover'
+                                objectFit: 'cover',
+                                display: 'block'
                             }}
                         />
                     </div>
@@ -65,15 +72,24 @@ export default function WildfireInfo() {
                         top: 0,
                         width: `${sizes[0]}%`,
                         height: '100%',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        pointerEvents: 'none'
                     }}>
                         <img
                             src={satelliteSrc}
                             alt="Satellite view"
                             style={{
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
                                 width: '800px',
-                                height: '100%',
-                                objectFit: 'cover'
+                                minWidth: '800px',
+                                maxWidth: '800px',
+                                height: '600px',
+                                minHeight: '600px',
+                                maxHeight: '600px',
+                                objectFit: 'cover',
+                                display: 'block'
                             }}
                             onLoad={() => console.log(`Image loaded for year: ${selectedPoint.year}`)}
                             onError={(e) => console.error(`Failed to load image for year: ${selectedPoint.year}`, e)}
@@ -91,12 +107,17 @@ export default function WildfireInfo() {
                             backgroundColor: '#fff',
                             cursor: 'ew-resize',
                             boxShadow: '0 0 10px rgba(0, 0, 0, 0.3)',
-                            zIndex: 10
+                            zIndex: 10,
+                            transform: 'translateX(-2px)'
                         }}
                         onMouseDown={(e) => {
+                            e.preventDefault();
                             const container = e.currentTarget.parentElement;
                             const startX = e.clientX;
                             const startSize = sizes[0];
+                            
+                            document.body.style.userSelect = 'none';
+                            document.body.style.cursor = 'ew-resize';
                             
                             const handleMouseMove = (moveEvent) => {
                                 const containerRect = container.getBoundingClientRect();
@@ -107,6 +128,8 @@ export default function WildfireInfo() {
                             };
                             
                             const handleMouseUp = () => {
+                                document.body.style.userSelect = '';
+                                document.body.style.cursor = '';
                                 document.removeEventListener('mousemove', handleMouseMove);
                                 document.removeEventListener('mouseup', handleMouseUp);
                             };
