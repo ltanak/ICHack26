@@ -12,7 +12,7 @@ export default function OpeningPage({ onEnterClick }) {
         </p>
         <button
           onClick={onEnterClick}
-          className="px-8 py-4 bg-white text-orange-700 font-bold text-lg rounded-lg hover:bg-gray-100 transition-colors duration-200 shadow-lg"
+          className="px-8 py-4 bg-white text-orange-700 font-bold text-lg rounded-lg hover:bg-gray-100 cursor-pointer transition-colors duration-200 shadow-lg"
         >
           Enter App
         </button>
