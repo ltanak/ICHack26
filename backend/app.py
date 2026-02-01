@@ -20,7 +20,7 @@ import numpy as np
 from Krishna.simulation import (
     create_grid, step, monte_carlo_simulation, load_masks,
     EMPTY, TREE, BURNING, BURNT
-
+)
 from utils import MapPoint
 
 

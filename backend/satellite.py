@@ -32,6 +32,10 @@ def get_satellite_image(
     response = requests.get(url, params=params, timeout=30)
     response.raise_for_status()
 
+    # Create directory if it doesn't exist
+    from pathlib import Path
+    Path(out_file).parent.mkdir(parents=True, exist_ok=True)
+
     with open(out_file, "wb") as f:
         f.write(response.content)
 

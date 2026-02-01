@@ -1,7 +1,6 @@
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import { useState, useEffect } from "react";
-import { useState, useEffect } from "react";
 import WildfireSimulation from "./WildfireSimulation";
 
 export default function Sidebar({ collapsed, setCollapsed }) {
