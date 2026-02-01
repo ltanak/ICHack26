@@ -255,6 +255,7 @@ def add_fire():
     x = data.get('x')
     
     if session_id not in simulation_state:
+        print("AH")
         return jsonify({'error': 'Invalid session ID'}), 400
     
     grid = simulation_state[session_id]['grid']
@@ -264,10 +265,13 @@ def add_fire():
     if 0 <= y < grid.shape[0] and 0 <= x < grid.shape[1]:
         if ca_mask[y, x] == 1 and grid[y, x] == TREE:
             grid[y, x] = BURNING
+            print("SUCCESS")
             success = True
         else:
+            print("FAIL - 1")
             success = False
     else:
+        print("FAIL - 2")
         success = False
     
     return jsonify({
@@ -299,7 +303,7 @@ def run_monte_carlo():
     }
     """
     data = request.json
-    n_runs = data.get('n_runs', 20)
+    n_runs = data.get('n_runs', 100)
     p_tree = data.get('p_tree', 0.6)
     ignition_prob = data.get('ignition_prob', 0.7)
     wind_dir_name = data.get('wind_dir', 'None')

@@ -87,6 +87,13 @@ const WildfireSimulation = () => {
     }
   }, [pTree, mode, customFires]);
 
+  const hasBurningRef = useRef(hasBurning);
+
+  useEffect(() => {
+    hasBurningRef.current = hasBurning;
+  }, [hasBurning]);
+
+
   // Step simulation
   const stepSimulation = useCallback(async () => {
     if (!sessionId) return;
@@ -119,7 +126,7 @@ const WildfireSimulation = () => {
 
   // Add fire point (custom mode)
   const addFire = useCallback(async (y, x) => {
-    if (!sessionId || mode !== 'custom') return;
+    // if (!sessionId || mode !== 'custom') return;
     
     try {
       const response = await fetch(`${API_URL}/add-fire`, {
@@ -153,7 +160,7 @@ const WildfireSimulation = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          n_runs: 20,
+          n_runs: 100,
           p_tree: pTree,
           ignition_prob: ignitionProb,
           wind_dir: windDir,
@@ -195,7 +202,13 @@ const WildfireSimulation = () => {
             // Hot colormap: black -> red -> orange -> yellow -> white
             const intensity = Math.floor(prob * 255);
             ctx.fillStyle = `rgb(${intensity}, ${Math.floor(intensity * 0.5)}, 0)`;
-            ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+            // ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+
+            const x = j * cellSize;
+            const y = (N - 1 - i) * cellSize;
+
+
+            ctx.fillRect(x, y, cellSize, cellSize);
           }
         }
       }
@@ -206,7 +219,13 @@ const WildfireSimulation = () => {
           if (mask[i][j] === 1) {
             const cellState = grid[i][j];
             ctx.fillStyle = COLORS[cellState];
-            ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+
+            const x = j * cellSize;
+            const y = (N - 1 - i) * cellSize;
+
+
+            ctx.fillRect(x, y, cellSize, cellSize);
+            // ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
           }
         }
       }
@@ -232,7 +251,7 @@ const WildfireSimulation = () => {
 
   // Handle canvas click
   const handleCanvasClick = useCallback((e) => {
-    if (mode !== 'custom' || isRunning || monteCarloMode) return;
+    // if (mode !== 'custom' || isRunning || monteCarloMode) return;
     
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -242,20 +261,30 @@ const WildfireSimulation = () => {
     addFire(y, x);
   }, [mode, isRunning, monteCarloMode, cellSize, addFire]);
 
+
+  const runSimulation = useCallback(async () => {
+    if (!isRunning || !hasBurningRef.current) return;
+
+    await stepSimulation();
+
+    animationRef.current = setTimeout(runSimulation, 100);
+  }, [isRunning, stepSimulation]);
+
+
+
   // Animation loop
   useEffect(() => {
-    if (isRunning && hasBurning) {
-      animationRef.current = setTimeout(() => {
-        stepSimulation();
-      }, 100); // 100ms interval
+    if (isRunning) {
+      runSimulation();
+    } else {
+      if (animationRef.current) clearTimeout(animationRef.current);
     }
-    
+
     return () => {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-      }
+      if (animationRef.current) clearTimeout(animationRef.current);
     };
-  }, [isRunning, hasBurning, stepSimulation]);
+  }, [isRunning, runSimulation]);
+
 
   // Draw grid whenever it changes
   useEffect(() => {
@@ -284,9 +313,28 @@ const WildfireSimulation = () => {
   return (
     <div className="wildfire-simulation">
       <h1>California Wildfire Simulation</h1>
+
+      {/* <div className="simulation-container flex justify-center">
+        <div className="w-full max-w-[800px] aspect-square">
+          <canvas
+            ref={canvasRef}
+            width={canvasWidth}
+            height={canvasHeight}
+            onClick={handleCanvasClick}
+            className="w-full h-full border-2 border-zinc-800"
+            style={{
+              cursor:
+                mode === "custom" && !isRunning && !monteCarloMode
+                  ? "crosshair"
+                  : "default",
+            }}
+          />
+        </div>
+      </div> */}
+
       
       <div className="simulation-container">
-        {/* Canvas */}
+
         <div className="canvas-container">
           <canvas
             ref={canvasRef}
@@ -299,7 +347,7 @@ const WildfireSimulation = () => {
             }}
           />
           
-          {/* Status */}
+
           <div className="status">
             {monteCarloMode && (
               <p><strong>Monte Carlo Mode</strong> - Showing burn probability (20 runs)</p>
@@ -311,11 +359,11 @@ const WildfireSimulation = () => {
           </div>
         </div>
         
-        {/* Controls */}
+
         <div className="controls">
           <h3>Parameters</h3>
           
-          {/* Vegetation Density */}
+
           <div className="control-group">
             <label>
               Vegetation Density: {pTree.toFixed(2)}
@@ -331,7 +379,7 @@ const WildfireSimulation = () => {
             </label>
           </div>
           
-          {/* Dryness */}
+
           <div className="control-group">
             <label>
               Dryness (Ignition Prob): {ignitionProb.toFixed(2)}
@@ -347,7 +395,7 @@ const WildfireSimulation = () => {
             </label>
           </div>
           
-          {/* Wind Strength */}
+
           <div className="control-group">
             <label>
               Wind Strength: {windStrength.toFixed(1)}
@@ -427,7 +475,6 @@ const WildfireSimulation = () => {
             </button>
           </div>
           
-          {/* Legend */}
           <div className="legend">
             <h3>Legend</h3>
             <div className="legend-item">
@@ -450,7 +497,6 @@ const WildfireSimulation = () => {
         </div>
       </div>
       
-      {/* Instructions */}
       <div className="instructions">
         <h3>Instructions</h3>
         <ul>
