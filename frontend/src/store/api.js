@@ -7,7 +7,10 @@ export const api = createApi({
     getPoints: builder.query({
       query: () => "/points",
     }),
+    getPointSummary: builder.query({
+      query: (point) => `/${encodeURIComponent(point)}/summary`,
+    }),
   }),
 });
 
-export const { useGetPointsQuery } = api;
+export const { useGetPointsQuery, useGetPointSummaryQuery } = api;
