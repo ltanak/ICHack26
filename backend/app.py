@@ -3,14 +3,15 @@ from typing import List
 import json
 from flask_cors import CORS
 from satellite import get_satellite_image
-from claude import sendPrompt
+# from claude import sendPrompt
 from utils import MapPoint
 from display_data.display import get_coords, get_image_path, save_image, overlay_image
 from pathlib import Path
 from markupsafe import escape
 from typing import List
+import time
 
-from claude import sendPrompt
+# from claude import sendPrompt
 from utils import MapPoint
 
 
@@ -29,11 +30,16 @@ def markLocations() -> List[MapPoint]:
 
 
 # POST selected point
-@app.route('/summary', methods=['GET'])
+@app.route('/summary/<path:point>', methods=['GET'])
 def getSummary(point: MapPoint):
     prompt = "PLACE_HOLDER"
+    print("reached")
 
-    return sendPrompt(prompt)
+    # For now just return Lorum Ipsum to save API calls
+    # Wait to simulate api response time
+    time.sleep(2)
+    return jsonify("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean porttitor magna eget tempus tristique. Suspendisse commodo arcu lacus, id iaculis elit aliquam non. Sed interdum dignissim turpis, vitae cursus neque volutpat eget. Aliquam vitae efficitur mauris. Integer ullamcorper, diam vitae pharetra tristique, lorem lorem lacinia diam, a cursus libero metus a felis. Sed luctus venenatis pellentesque. Donec sed nunc eget nunc placerat lobortis. Donec fringilla leo dolor, quis faucibus enim imperdiet sed. In fermentum libero ipsum, eget convallis eros gravida et. Aliquam ex massa, bibendum non rutrum vel, posuere mollis ante. Nam congue laoreet dictum. Nulla quis neque imperdiet, fringilla lacus ac, iaculis mi. Nunc laoreet lacinia feugiat. Aliquam nec rhoncus nisi, a malesuada velit.")
+    # return sendPrompt(prompt)
 
 
 @app.route('/satellite', methods=['GET'])
