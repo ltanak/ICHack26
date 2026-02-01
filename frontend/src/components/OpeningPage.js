@@ -6,7 +6,7 @@ export default function OpeningPage({ onEnterClick }) {
       <div className="text-center max-w-2xl">
         <div className="text-8xl mb-6">🔥</div>
         <h1 className="text-6xl font-bold text-white mb-4">Wildfire</h1>
-        <h2 className="text-2xl text-orange-200 mb-8 font-semibold">Model. Mitigate. Predict.</h2>
+        <h2 className="text-2xl text-orange-200 mb-8 font-semibold">Model. Simulate. Mitigate.</h2>
         <p className="text-xl text-gray-100 mb-12 leading-relaxed">
           Predict wildfires with an advanced simulation model.
         </p>
