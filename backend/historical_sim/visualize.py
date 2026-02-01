@@ -103,6 +103,45 @@ class HistoricalFireSimulation:
             self.bounds = (-124.5, 32.5, -114.0, 42.0)
             return []
     
+    def _add_vegetation_background(self):
+        """Add realistic vegetation density as background."""
+        try:
+            # Import the realistic vegetation functions
+            import sys
+            from pathlib import Path
+            sys.path.insert(0, str(Path(__file__).parent.parent))
+            from Krishna.simulation import load_masks, load_dense_areas, create_vegetation_probability_map
+            
+            # Extract year from folder name (e.g., "2017_Snapshot" -> 2017)
+            year_str = self.folder_name.split('_')[0]
+            year = int(year_str) if year_str.isdigit() else 2020
+            
+            # Load vegetation data
+            ca_mask, _, bounds = load_masks()
+            dense_coords, radius_deg = load_dense_areas(year=year, threshold=10.0)
+            
+            # Create probability map
+            prob_map = create_vegetation_probability_map(
+                ca_mask, bounds, dense_coords, radius_deg,
+                base_prob=0.8, dense_prob=1.0, min_prob=0.8
+            )
+            
+            # Display as background image
+            minx, miny, maxx, maxy = bounds
+            self.ax.imshow(
+                prob_map,
+                extent=(minx, maxx, miny, maxy),
+                origin='lower',
+                cmap='Greens',
+                alpha=0.6,
+                vmin=0,
+                vmax=1,
+                zorder=0
+            )
+            print(f"Added vegetation background for year {year}")
+        except Exception as e:
+            print(f"Could not load vegetation background: {e}")
+    
     def _build_cache(self):
         """Build cumulative vertex cache for instant playback."""
         files = get_sorted_files(self.folder_path)
@@ -148,10 +187,13 @@ class HistoricalFireSimulation:
         self.ax.set_xlim(self.bounds[0], self.bounds[2])
         self.ax.set_ylim(self.bounds[1], self.bounds[3])
         
+        # Add realistic vegetation background
+        self._add_vegetation_background()
+        
         # California (static)
         if self.ca_verts:
-            ca_coll = PolyCollection(self.ca_verts, facecolor='green',
-                                     edgecolor='darkgreen', alpha=0.8)
+            ca_coll = PolyCollection(self.ca_verts, facecolor='none',
+                                     edgecolor='darkgreen', linewidth=2, alpha=0.9)
             self.ax.add_collection(ca_coll)
         
         # Fire collection (updated each frame)

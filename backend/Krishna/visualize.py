@@ -38,8 +38,8 @@ class FireSimulation:
     
     def __init__(self):
         # Initial parameters
-        self.p_tree = 0.6
-        self.ignition_prob = 0.7
+        self.p_tree = 0.8
+        self.ignition_prob = 0.8
         self.wind_strength = 1.0
         self.wind_dir = (0, 0)
         self.mode = "Historic Run"
