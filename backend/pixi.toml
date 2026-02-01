@@ -13,7 +13,7 @@ sim = "python -m Krishna.sim"
 geo_process = "python -m Krishna.geo_processing"
 display = "python -m display_data.display"
 claude = "python -m claude.claude"
-vegetation_density = "python vegetation_density.py"
+preprocess_vegetation = "python vegetation_density.py"
 
 [dependencies]
 python = ">=3.11"
