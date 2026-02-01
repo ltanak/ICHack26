@@ -15,6 +15,7 @@ import base64
 import time
 import matplotlib.pyplot as plt
 from Krishna.visualize import FireSimulation
+from Krishna.visualize_tft_web import TFTFireSimulation
 import uuid
 import numpy as np
 # Import your simulation functions
@@ -446,4 +447,195 @@ def get_masks():
     return jsonify({
         'ca_mask': ca_mask.tolist(),
         'shape': ca_mask.shape
+    })
+
+
+# TFT Simulation endpoints
+@app.route('/tft/init', methods=['POST'])
+def init_tft_simulation():
+    """
+    Initialize a new TFT fire simulation.
+    
+    Request body:
+    {
+        "temperature": 50,
+        "humidity": 5,
+        "wind_speed": 20,
+        "wind_direction": 270
+    }
+    
+    Returns:
+    {
+        "session_id": "uuid",
+        "image": "base64_encoded_image",
+        "stats": {...}
+    }
+    """
+    data = request.json or {}
+    
+    # Get weather parameters
+    temperature = data.get('temperature', 50)
+    humidity = data.get('humidity', 5)
+    wind_speed = data.get('wind_speed', 20)
+    wind_direction = data.get('wind_direction', 270)
+    
+    # Create TFT simulation
+    sim = TFTFireSimulation(
+        temperature=temperature,
+        humidity=humidity,
+        wind_speed=wind_speed,
+        wind_direction=wind_direction
+    )
+    
+    # Store in global state
+    session_id = str(uuid.uuid4())
+    if not hasattr(init_tft_simulation, 'sessions'):
+        init_tft_simulation.sessions = {}
+    init_tft_simulation.sessions[session_id] = sim
+    
+    # Capture current frame
+    buf = io.BytesIO()
+    sim.fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode()
+    
+    return jsonify({
+        'session_id': session_id,
+        'image': f'data:image/png;base64,{img_base64}',
+        'stats': sim.get_stats()
+    })
+
+
+@app.route('/tft/step/<session_id>', methods=['POST'])
+def tft_step(session_id):
+    """
+    Advance TFT simulation by one step.
+    
+    Returns:
+    {
+        "image": "base64_encoded_image",
+        "stats": {...}
+    }
+    """
+    if not hasattr(init_tft_simulation, 'sessions'):
+        return jsonify({'error': 'Session not found'}), 404
+    
+    if session_id not in init_tft_simulation.sessions:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    sim = init_tft_simulation.sessions[session_id]
+    sim.step()
+    
+    # Capture current frame
+    buf = io.BytesIO()
+    sim.fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode()
+    
+    return jsonify({
+        'image': f'data:image/png;base64,{img_base64}',
+        'stats': sim.get_stats()
+    })
+
+
+@app.route('/tft/reset/<session_id>', methods=['POST'])
+def tft_reset(session_id):
+    """
+    Reset TFT simulation to initial state.
+    
+    Returns:
+    {
+        "image": "base64_encoded_image",
+        "stats": {...}
+    }
+    """
+    if not hasattr(init_tft_simulation, 'sessions'):
+        return jsonify({'error': 'Session not found'}), 404
+    
+    if session_id not in init_tft_simulation.sessions:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    sim = init_tft_simulation.sessions[session_id]
+    sim.reset()
+    
+    # Capture current frame
+    buf = io.BytesIO()
+    sim.fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode()
+    
+    return jsonify({
+        'image': f'data:image/png;base64,{img_base64}',
+        'stats': sim.get_stats()
+    })
+
+
+@app.route('/tft/monte-carlo/<session_id>', methods=['POST'])
+def tft_monte_carlo(session_id):
+    """
+    Run Monte Carlo analysis on TFT simulation.
+    
+    Request body:
+    {
+        "n_runs": 20
+    }
+    
+    Returns:
+    {
+        "image": "base64_encoded_image",
+        "stats": {...}
+    }
+    """
+    if not hasattr(init_tft_simulation, 'sessions'):
+        return jsonify({'error': 'Session not found'}), 404
+    
+    if session_id not in init_tft_simulation.sessions:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    data = request.json or {}
+    n_runs = data.get('n_runs', 20)
+    
+    sim = init_tft_simulation.sessions[session_id]
+    sim.run_monte_carlo(n_runs=n_runs)
+    
+    # Capture current frame
+    buf = io.BytesIO()
+    sim.fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode()
+    
+    return jsonify({
+        'image': f'data:image/png;base64,{img_base64}',
+        'stats': sim.get_stats()
+    })
+
+
+@app.route('/tft/frame/<session_id>', methods=['GET'])
+def tft_get_frame(session_id):
+    """
+    Get current TFT simulation frame and stats.
+    
+    Returns:
+    {
+        "image": "base64_encoded_image",
+        "stats": {...}
+    }
+    """
+    if not hasattr(init_tft_simulation, 'sessions'):
+        return jsonify({'error': 'Session not found'}), 404
+    
+    if session_id not in init_tft_simulation.sessions:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    sim = init_tft_simulation.sessions[session_id]
+    
+    # Capture current frame
+    buf = io.BytesIO()
+    sim.fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode()
+    
+    return jsonify({
+        'image': f'data:image/png;base64,{img_base64}',
+        'stats': sim.get_stats()
     })
