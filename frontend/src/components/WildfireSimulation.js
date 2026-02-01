@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './WildfireSimulation.css';
 
-const API_URL = 'http://localhost:5000/api';
+
 
 // Cell state constants
 const EMPTY = 0;
@@ -18,7 +18,7 @@ const COLORS = {
   OUTSIDE: '#FFFFFF'      // white for outside California
 };
 
-const WildfireSimulation = () => {
+const WildfireSimulation = ({ gridMode = false }) => {
   // Simulation state
   const [sessionId, setSessionId] = useState(null);
   const [grid, setGrid] = useState(null);
@@ -47,15 +47,17 @@ const WildfireSimulation = () => {
   const animationRef = useRef(null);
   
   // Cell size calculation
-  const canvasWidth = 800;
-  const canvasHeight = 800;
+  const baseWidth = 800;
+  const baseHeight = 800;
+  const canvasWidth = gridMode ? baseWidth * 0.5 : baseWidth;
+  const canvasHeight = gridMode ? baseHeight * 0.5 : baseHeight;
   
   const cellSize = gridShape[0] > 0 ? Math.floor(canvasWidth / gridShape[0]) : 1;
 
   // Initialize simulation
   const initializeSimulation = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/init`, {
+      const response = await fetch(`http://127.0.0.1:5001/api/init`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +101,7 @@ const WildfireSimulation = () => {
     if (!sessionId) return;
     
     try {
-      const response = await fetch(`${API_URL}/step`, {
+      const response = await fetch(`http://127.0.0.1:5001/api/step`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -129,7 +131,7 @@ const WildfireSimulation = () => {
     // if (!sessionId || mode !== 'custom') return;
     
     try {
-      const response = await fetch(`${API_URL}/add-fire`, {
+      const response = await fetch(`http://127.0.0.1:5001/api/add-fire`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,7 +158,7 @@ const WildfireSimulation = () => {
     setIsRunning(false);
     
     try {
-      const response = await fetch(`${API_URL}/monte-carlo`, {
+      const response = await fetch(`${process.env.API_URL}/monte-carlo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -255,8 +257,12 @@ const WildfireSimulation = () => {
     
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / cellSize);
-    const y = Math.floor((e.clientY - rect.top) / cellSize);
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const canvasX = (e.clientX - rect.left) * scaleX;
+    const canvasY = (e.clientY - rect.top) * scaleY;
+    const x = Math.floor(canvasX / cellSize);
+    const y = Math.floor(canvasY / cellSize);
     
     addFire(y, x);
   }, [mode, isRunning, monteCarloMode, cellSize, addFire]);
@@ -312,26 +318,6 @@ const WildfireSimulation = () => {
 
   return (
     <div className="wildfire-simulation">
-      <h1>California Wildfire Simulation</h1>
-
-      {/* <div className="simulation-container flex justify-center">
-        <div className="w-full max-w-[800px] aspect-square">
-          <canvas
-            ref={canvasRef}
-            width={canvasWidth}
-            height={canvasHeight}
-            onClick={handleCanvasClick}
-            className="w-full h-full border-2 border-zinc-800"
-            style={{
-              cursor:
-                mode === "custom" && !isRunning && !monteCarloMode
-                  ? "crosshair"
-                  : "default",
-            }}
-          />
-        </div>
-      </div> */}
-
       
       <div className="simulation-container">
 

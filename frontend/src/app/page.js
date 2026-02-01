@@ -18,10 +18,9 @@ export default function Home() {
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       </Sider> */}
       <Layout>
-        <Content className="bg-slate-200! flex h-screen flex-col">
-          <div className="overflow-hidden ">
+        <Content className="bg-slate-200! flex min-h-screen flex-col">
+          <div className="overflow-hidden">
             <MapChart />
-            <WildfireSimulation />
           </div>
           <Content className="bg-slate-200! flex">
             <WildfireInfo />

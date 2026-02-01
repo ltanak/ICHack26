@@ -1,6 +1,7 @@
 import { Divider } from "antd";
 import { useSelector } from "react-redux";
 import WildfireSummary from "./WildfireSummary";
+import WildfireSimulation from "./WildfireSimulation";
 
 export default function WildfireInfo() {
     const selectedPoint = useSelector((state) => state.points.selectedPoint);
@@ -20,6 +21,10 @@ export default function WildfireInfo() {
             <Divider />
             <WildfireSummary />
             <Divider />
+            <div className="grid grid-cols-2">
+                <WildfireSimulation gridMode={true}/>
+                <WildfireSimulation gridMode={true}/>
+            </div>
         </div>
     );
 }

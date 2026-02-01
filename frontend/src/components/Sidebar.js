@@ -7,7 +7,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     const [simulationData, setSimulationData] = useState(null);
 
     useEffect(() => {
-        fetch('http://127.0.0.1:5000/simulation/frame')
+        fetch(`${process.env.API_URL}/simulation/frame`)
             .then(res => res.json())
             .then(data => setSimulationData(data))
             .catch(err => console.error('Error fetching simulation data:', err));
@@ -40,7 +40,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                     <h2 className="text-2xl"><strong>Summary</strong></h2>
                     <p className="text-lg">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean porttitor magna eget tempus tristique. Suspendisse commodo arcu lacus, id iaculis elit aliquam non. Sed interdum dignissim turpis, vitae cursus neque volutpat eget. Aliquam vitae efficitur mauris. Integer ullamcorper, diam vitae pharetra tristique, lorem lorem lacinia diam, a cursus libero metus a felis. Sed luctus venenatis pellentesque. Donec sed nunc eget nunc placerat lobortis. Donec fringilla leo dolor, quis faucibus enim imperdiet sed. In fermentum libero ipsum, eget convallis eros gravida et. Aliquam ex massa, bibendum non rutrum vel, posuere mollis ante. Nam congue laoreet dictum. Nulla quis neque imperdiet, fringilla lacus ac, iaculis mi. Nunc laoreet lacinia feugiat. Aliquam nec rhoncus nisi, a malesuada velit.</p>
                     <img
-                    src="http://127.0.0.1:5000/satellite"
+                    src={`${process.env.API_URL}/satellite`}
                     alt="Satellite view"
                     className="w-full h-auto"
                     />
