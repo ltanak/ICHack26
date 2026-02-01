@@ -156,28 +156,6 @@ def run_preprocessing(gpkg_path, N=400):
     print("Preprocessing complete!")
     print(f"{'='*60}\n")
 
-    # Optional: Show a quick preview
-    try:
-        import matplotlib.pyplot as plt
-        from matplotlib.colors import ListedColormap
-        
-        # Create combined visualization
-        grid = ca_mask.copy()
-        grid[fire_mask == BURNING] = BURNING
-        
-        cmap = ListedColormap(["white", "lightgreen", "red"])
-        plt.figure(figsize=(8, 10))
-        plt.imshow(grid, cmap=cmap, origin="lower")
-        plt.title("Preview: California (green) + Fire starts (red)")
-        plt.axis("off")
-        plt.tight_layout()
-        plt.savefig(CACHE_DIR / "preview.png", dpi=150, bbox_inches='tight')
-        print(f"Preview saved to {CACHE_DIR / 'preview.png'}")
-        print("Check this image to verify California orientation!")
-        plt.close()
-    except Exception as e:
-        print(f"Could not create preview: {e}")
-
 if __name__ == "__main__":
     # Run preprocessing on the January 1, 2020 AM snapshot
     gpkg_file = "Datasets/Snapshot/2020_Snapshot/20200101AM.gpkg"

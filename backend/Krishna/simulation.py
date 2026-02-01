@@ -111,7 +111,7 @@ def get_wind_multiplier(direction, wind_dir, wind_strength):
         return 1.0
 
 
-def step(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0):
+def step(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0, retardant_zones=None):
     """
     Advance fire simulation by one time step.
     
@@ -120,12 +120,25 @@ def step(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0):
         ignition_prob: Base probability of fire spreading to adjacent tree
         wind_dir: Wind direction tuple (di, dj)
         wind_strength: Wind strength multiplier
+        retardant_zones: List of (y, x, radius) tuples for retardant application, or None
     
     Returns:
         Updated grid after one time step
     """
     new_grid = grid.copy()
     burning_cells = np.argwhere(grid == BURNING)
+    
+    # Create retardant mask if zones are provided
+    retardant_mask = None
+    if retardant_zones:
+        N = grid.shape[0]
+        retardant_mask = np.ones((N, N))  # 1.0 = normal, 0.2 = retardant
+        
+        for cy, cx, radius in retardant_zones:
+            # Apply retardant in circular area
+            y_grid, x_grid = np.ogrid[:N, :N]
+            distances = np.sqrt((y_grid - cy)**2 + (x_grid - cx)**2)
+            retardant_mask[distances <= radius] = 0.2  # 80% reduction in spread probability
     
     for i, j in burning_cells:
         # Burning cell becomes burnt
@@ -141,7 +154,14 @@ def step(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0):
                 if grid[ni, nj] == TREE:
                     # Calculate spread probability with wind effect
                     wind_mult = get_wind_multiplier((di, dj), wind_dir, wind_strength)
-                    spread_prob = min(1.0, ignition_prob * wind_mult)
+                    spread_prob = ignition_prob * wind_mult
+                    
+                    # Apply retardant effect if in retardant zone
+                    if retardant_mask is not None:
+                        spread_prob *= retardant_mask[ni, nj]
+                    
+                    # Clamp to [0, 1]
+                    spread_prob = min(1.0, spread_prob)
                     
                     # Probabilistic spread
                     if np.random.rand() < spread_prob:
@@ -150,7 +170,7 @@ def step(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0):
     return new_grid
 
 
-def run_simulation(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0, max_steps=10000):
+def run_simulation(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0, retardant_zones=None, cleared_zones=None, max_steps=10000):
     """
     Run fire simulation until no burning cells remain.
     
@@ -159,22 +179,40 @@ def run_simulation(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0, max_
         ignition_prob: Base fire spread probability
         wind_dir: Wind direction
         wind_strength: Wind strength multiplier
+        retardant_zones: List of (y, x, radius) tuples for retardant zones
+        cleared_zones: List of (y, x, width, height) tuples for cleared areas
         max_steps: Maximum simulation steps (safety limit)
     
     Returns:
         Final grid state
     """
     current_grid = grid.copy()
+    
+    # Apply cleared zones (remove trees)
+    if cleared_zones:
+        for cy, cx, w, h in cleared_zones:
+            half_w = w // 2
+            half_h = h // 2
+            if half_w == 0 or half_h == 0:
+                continue  # Skip invalid cleared zones
+            for dy in range(-half_h, half_h + 1):
+                for dx in range(-half_w, half_w + 1):
+                    y, x = cy + dy, cx + dx
+                    if 0 <= y < current_grid.shape[0] and 0 <= x < current_grid.shape[1]:
+                        if (dx / half_w) ** 2 + (dy / half_h) ** 2 <= 1:
+                            if current_grid[y, x] == TREE:
+                                current_grid[y, x] = EMPTY
+    
     steps = 0
     
     while np.any(current_grid == BURNING) and steps < max_steps:
-        current_grid = step(current_grid, ignition_prob, wind_dir, wind_strength)
+        current_grid = step(current_grid, ignition_prob, wind_dir, wind_strength, retardant_zones)
         steps += 1
     
     return current_grid
 
 
-def monte_carlo_simulation(n_runs, p_tree, ignition_prob, wind_dir=(0, 0), wind_strength=1.0, custom_fire_points=None):
+def monte_carlo_simulation(n_runs, p_tree, ignition_prob, wind_dir=(0, 0), wind_strength=1.0, custom_fire_points=None, retardant_zones=None, cleared_zones=None):
     """
     Run Monte Carlo simulation to estimate burn probability.
     
@@ -185,6 +223,8 @@ def monte_carlo_simulation(n_runs, p_tree, ignition_prob, wind_dir=(0, 0), wind_
         wind_dir: Wind direction
         wind_strength: Wind strength multiplier
         custom_fire_points: List of (y, x) tuples for custom fire starts, or None for historic starts
+        retardant_zones: List of (y, x, radius) tuples for retardant zones
+        cleared_zones: List of (y, x, width, height) tuples for cleared areas
     
     Returns:
         burn_probability: NxN array with burn probability (0 to 1)
@@ -210,8 +250,8 @@ def monte_carlo_simulation(n_runs, p_tree, ignition_prob, wind_dir=(0, 0), wind_
                 if grid[y, x] == TREE:
                     grid[y, x] = BURNING
         
-        # Run simulation
-        final_grid = run_simulation(grid, ignition_prob, wind_dir, wind_strength)
+        # Run simulation with mitigation zones
+        final_grid = run_simulation(grid, ignition_prob, wind_dir, wind_strength, retardant_zones, cleared_zones)
         
         # Count burnt cells
         burn_counts += (final_grid == BURNT)
