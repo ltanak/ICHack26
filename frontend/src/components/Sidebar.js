@@ -36,7 +36,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     const [simulationData, setSimulationData] = useState(null);
 
     useEffect(() => {
-        fetch('http://127.0.0.1:5000/simulation/frame')
+        fetch(`${process.env.API_URL}/simulation/frame`)
             .then(res => res.json())
             .then(data => setSimulationData(data))
             .catch(err => console.error('Error fetching simulation data:', err));
