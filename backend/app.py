@@ -3,7 +3,7 @@ from typing import List
 import json
 from flask_cors import CORS
 from satellite import get_satellite_image
-from claude.claude import sendPrompt
+from claude.claude import sendPrompt, get_historical_summary
 from utils import MapPoint
 from display_data.display import get_coords, get_image_path, save_image, overlay_image, get_snapshots
 from pathlib import Path
@@ -35,20 +35,22 @@ def markLocations() -> List[MapPoint]:
     if request.method == 'GET':
         with open('resources/wildfires.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
+            print(data)
 
             return jsonify(data)
 
+YEAR = 2017
 
 # POST selected point
-@app.route('/summary/<path:point>', methods=['GET'])
-def getSummary(point: MapPoint):
-    prompt = "PLACE_HOLDER"
-    print("reached")
+@app.route('/summary/<int:year>', methods=['GET'])
+def getSummary(year: int):
+    global YEAR
+    res = get_historical_summary(year=year)
+    YEAR = year
 
     # For now just return Lorum Ipsum to save API calls
     # Wait to simulate api response time
-    time.sleep(2)
-    return jsonify("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean porttitor magna eget tempus tristique. Suspendisse commodo arcu lacus, id iaculis elit aliquam non. Sed interdum dignissim turpis, vitae cursus neque volutpat eget. Aliquam vitae efficitur mauris. Integer ullamcorper, diam vitae pharetra tristique, lorem lorem lacinia diam, a cursus libero metus a felis. Sed luctus venenatis pellentesque. Donec sed nunc eget nunc placerat lobortis. Donec fringilla leo dolor, quis faucibus enim imperdiet sed. In fermentum libero ipsum, eget convallis eros gravida et. Aliquam ex massa, bibendum non rutrum vel, posuere mollis ante. Nam congue laoreet dictum. Nulla quis neque imperdiet, fringilla lacus ac, iaculis mi. Nunc laoreet lacinia feugiat. Aliquam nec rhoncus nisi, a malesuada velit.")
+    return jsonify(res)
     # return sendPrompt(prompt)
 
 
@@ -60,11 +62,12 @@ overlay_cache = {}
 cleanup_queue = deque()
 CLEANUP_LAG = 10
 
-@app.route('/satellite', methods=['GET'])
+@app.route('/satellite/', methods=['GET'])
 def getSatelliteImage():
+    global YEAR
     try:
         # get year from the request
-        year = request.args.get('year', default=2017, type=int)
+        year = request.args.get('year', default=YEAR, type=int)
         snapshot = request.args.get('snapshot', default=None, type=str)
 
         # Serve cached overlay if available

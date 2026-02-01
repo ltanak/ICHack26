@@ -1,77 +1,26 @@
 [
     {
-        "name": "2017 Chile Wildfires",
+        "name": "2017",
         "markerOffset": -15,
-        "coordinates": [-71.6, -35.2]
+        "year": 2017,
+        "coordinates": [-118.40, 36.45]
     },
     {
-        "name": "Tubbs Fire, California 2017",
+        "name": "2018",
         "markerOffset": -15,
+        "year": 2018,
         "coordinates": [-122.73, 38.50]
     },
     {
-        "name": "Atlas Fire, California 2017",
+        "name": "2019",
         "markerOffset": -15,
-        "coordinates": [-122.40, 38.50]
+        "year": 2019,
+        "coordinates": [-123.40, 38.50]
     },
     {
-        "name": "Thomas Fire, California 2017-2018",
+        "name": "2020",
         "markerOffset": -15,
+        "year": 2020,
         "coordinates": [-119.20, 34.45]
-    },
-    {
-        "name": "Mendocino Complex Fire, California 2018",
-        "markerOffset": -15,
-        "coordinates": [-123.20, 39.25]
-    },
-    {
-        "name": "Black Summer Australian Bushfires 2019-2020",
-        "markerOffset": -15,
-        "coordinates": [146.50, -36.50]
-    },
-    {
-        "name": "August Complex Fire, California 2020",
-        "markerOffset": -15,
-        "coordinates": [-123.30, 40.30]
-    },
-    {
-        "name": "Creek Fire, California 2020",
-        "markerOffset": -15,
-        "coordinates": [-119.39, 37.12]
-    },
-    {
-        "name": "CZU Lightning Complex Fire, California 2020",
-        "markerOffset": -15,
-        "coordinates": [-122.25, 37.12]
-    },
-    {
-        "name": "LNU Lightning Complex Fire, California 2020",
-        "markerOffset": -15,
-        "coordinates": [-122.70, 38.55]
-    },
-    {
-        "name": "North Complex Fire, California 2020",
-        "markerOffset": -15,
-        "coordinates": [-121.10, 39.90]
-    },
-    {
-        "name": "SQF Complex Fire, California 2020-2021",
-        "markerOffset": -15,
-        "coordinates": [-118.70, 36.60]
-    },
-    {
-        "name": "Dixie Fire, California 2021",
-        "markerOffset": -15,
-        "coordinates": [-121.30, 40.10]
-    },
-    {
-        "name": "Lava Fire, California 2021",
-        "markerOffset": -15,
-        "coordinates": [-122.38, 41.43]
-    },
-    {
-        "name": "Dzüko Valley Wildfires, India 2020-2021",
-        "markerOffset": -15,
-        "coordinates": [94.10, 25.73]
     }
 ]

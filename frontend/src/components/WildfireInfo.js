@@ -24,9 +24,12 @@ export default function WildfireInfo() {
             <Divider />
             <div className="grid grid-cols-2">
                 <img
-                    src={`http://127.0.0.1:5001/satellite`}
+                    key={`${selectedPoint.year}-${Date.now()}`}
+                    src={`http://127.0.0.1:5001/satellite/?year=${selectedPoint.year}&t=${Date.now()}`}
                     alt="Satellite view"
-                    className="w-full h-auto px-16 pt-6 rounded-lg"
+                    className="w-full h-auto"
+                    onLoad={() => console.log(`Image loaded for year: ${selectedPoint.year}`)}
+                    onError={(e) => console.error(`Failed to load image for year: ${selectedPoint.year}`, e)}
                 />
                 <WildfireSimulation gridMode={true}/>
             </div>

@@ -97,7 +97,7 @@ export default function MapChart() {
                                 ))
                             }
                             </Geographies>
-                            {markers.map(({ name, coordinates, markerOffset }) => {
+                            {markers.map(({ name, coordinates, markerOffset, year }) => {
                                 const scale = 1 / zoom;
                                 return (
                                     <Marker key={name} coordinates={coordinates}>
@@ -108,7 +108,7 @@ export default function MapChart() {
                                             strokeWidth={2 * scale} 
                                             onMouseEnter={() => setHoveredMarker(name)} 
                                             onMouseLeave={() => setHoveredMarker(null)} 
-                                            onClick={() => dispatch(setSelectedPoint({ name }))}
+                                            onClick={() => dispatch(setSelectedPoint({ name, year, coordinates }))}
                                             className="cursor-pointer"
                                         />
                                         <text 
