@@ -4,6 +4,7 @@ import { Layout } from "antd";
 import { useState } from "react";
 import MapChart from "../components/MapChart";
 import Sidebar from "@/components/Sidebar";
+import WildfireSimulation from "@/components/WildfireSimulation";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -19,6 +20,7 @@ export default function Home() {
         <Content>
           <div className="overflow-hidden">
             <MapChart />
+            <WildfireSimulation />
           </div>
         </Content>
       </Layout>
