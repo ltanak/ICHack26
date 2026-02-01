@@ -358,7 +358,9 @@ def run_monte_carlo():
         "wind_dir": "None",
         "wind_strength": 1.0,
         "mode": "historic" or "custom",
-        "custom_fires": [[y1, x1], ...] (optional, for custom mode)
+        "custom_fires": [[y1, x1], ...] (optional, for custom mode),
+        "retardant_zones": [[y, x, radius], ...] (optional),
+        "cleared_zones": [[y, x, width, height], ...] (optional)
     }
     
     Returns:
@@ -375,23 +377,33 @@ def run_monte_carlo():
     wind_strength = data.get('wind_strength', 1.0)
     mode = data.get('mode', 'historic')
     custom_fires = data.get('custom_fires', [])
+    retardant_zones = data.get('retardant_zones', [])
+    cleared_zones = data.get('cleared_zones', [])
     
     wind_dir = WIND_DIRS.get(wind_dir_name, (0, 0))
     
     # Determine custom fire points
     custom_fire_points = custom_fires if mode == 'custom' else None
     
+    # Convert mitigation zones to tuples (format expected by simulation)
+    retardant_zones_tuples = [tuple(z) for z in retardant_zones] if retardant_zones else None
+    cleared_zones_tuples = [tuple(z) for z in cleared_zones] if cleared_zones else None
+    
     print(f"Monte Carlo params: n_runs={n_runs}, p_tree={p_tree}, ignition_prob={ignition_prob}, mode={mode}")
     print(f"Custom fire points: {custom_fire_points}")
+    print(f"Retardant zones: {retardant_zones_tuples}")
+    print(f"Cleared zones: {cleared_zones_tuples}")
     
-    # Run Monte Carlo
+    # Run Monte Carlo with mitigation zones
     burn_prob = monte_carlo_simulation(
         n_runs=n_runs,
         p_tree=p_tree,
         ignition_prob=ignition_prob,
         wind_dir=wind_dir,
         wind_strength=wind_strength,
-        custom_fire_points=custom_fire_points
+        custom_fire_points=custom_fire_points,
+        retardant_zones=retardant_zones_tuples,
+        cleared_zones=cleared_zones_tuples
     )
     
     print(f"Burn probability stats: min={burn_prob.min()}, max={burn_prob.max()}, mean={burn_prob.mean()}")
