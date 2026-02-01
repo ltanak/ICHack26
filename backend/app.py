@@ -43,6 +43,7 @@ def getSatelliteImage():
         # get year from the request
         year = 1
 
+        # base imagee
         coords = get_coords(year)
 
         out_file, width_px, height_px = get_satellite_image(
