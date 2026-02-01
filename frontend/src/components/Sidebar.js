@@ -36,6 +36,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                     />
                 </div>
             </div>
+            <img src="http://127.0.0.1:5000/simulation/frame" alt="Satellite view" className="w-full h-auto"/>
         </div>
     )
 }
