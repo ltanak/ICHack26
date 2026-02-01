@@ -12,6 +12,7 @@ image_editing = "python -m image-editing.image"
 sim = "python -m Krishna.sim"
 geo_process = "python -m Krishna.geo_processing"
 display = "python -m display_data.display"
+claude = "python -m claude.claude"
 
 [dependencies]
 python = ">=3.11"
