@@ -50,13 +50,118 @@ def load_masks():
     return ca_mask, fire_mask, bounds
 
 
-def create_grid(p_tree=0.6, seed=None):
+def load_dense_areas(year=2020, threshold=10.0):
+    """
+    Load dense vegetation areas from preprocessed data.
+    
+    Args:
+        year: Year to load (2017, 2018, 2019, or 2020)
+        threshold: Density threshold used in preprocessing
+    
+    Returns:
+        coordinates: Array of [lat, lon] coordinates
+        radius_deg: Radius in degrees for dense areas
+    """
+    from pathlib import Path
+    
+    output_dir = Path(__file__).parent.parent / 'output' / 'vegetation_data'
+    dense_file = output_dir / f'dense_areas_{year}_t{threshold:.0f}.npz'
+    
+    if not dense_file.exists():
+        print(f"Warning: Dense areas file not found: {dense_file}")
+        return None, None
+    
+    data = np.load(dense_file, allow_pickle=True)
+    coordinates = data['coordinates']  # [lat, lon]
+    radius_deg = data['radius_deg'][0]
+    
+    return coordinates, radius_deg
+
+
+def create_vegetation_probability_map(ca_mask, bounds, dense_coords, radius_deg, base_prob=0.8, dense_prob=0.98, min_prob=0.7):
+    """
+    Create a spatially-varying vegetation probability map based on dense areas.
+    
+    Args:
+        ca_mask: California mask
+        bounds: (minx, miny, maxx, maxy) in lon/lat
+        dense_coords: Array of [lat, lon] for dense vegetation areas
+        radius_deg: Radius in degrees for dense areas
+        base_prob: Base probability for areas not near dense vegetation
+        dense_prob: Probability for areas near dense vegetation
+        min_prob: Minimum probability to ensure some vegetation everywhere
+    
+    Returns:
+        prob_map: NxN array with vegetation probability for each cell
+    """
+    from scipy.ndimage import gaussian_filter
+    
+    N = ca_mask.shape[0]
+    minx, miny, maxx, maxy = bounds
+    
+    # Create probability map starting with base probability
+    prob_map = np.full((N, N), base_prob, dtype=float)
+    
+    # For areas outside California, set to 0
+    prob_map[ca_mask == 0] = 0
+    
+    if dense_coords is None or len(dense_coords) == 0:
+        return prob_map
+    
+    # Scale up the radius to make dense areas more visible
+    # Original radius is too small (~0.006 deg = 660m), increase by 10x
+    effective_radius = radius_deg * 10
+    
+    # Create coordinate grids
+    lons = np.linspace(minx, maxx, N)
+    lats = np.linspace(miny, maxy, N)
+    lon_grid, lat_grid = np.meshgrid(lons, lats)
+    
+    # For each dense area, increase probability in surrounding region
+    for lat, lon in dense_coords:
+        # Calculate distance from this dense area
+        dist = np.sqrt((lon_grid - lon)**2 + (lat_grid - lat)**2)
+        
+        # Create smooth transition from dense_prob to base_prob
+        # Within radius: dense_prob
+        # Beyond 3*radius: base_prob
+        # Between: smooth interpolation
+        mask_inner = dist <= effective_radius
+        mask_transition = (dist > effective_radius) & (dist <= 2 * effective_radius)
+        
+        # Set high probability in dense areas
+        prob_map[mask_inner] = dense_prob
+        
+        # Smooth transition zone
+        if np.any(mask_transition):
+            transition_factor = 1 - (dist[mask_transition] - effective_radius) / (2 * effective_radius)
+            prob_map[mask_transition] = np.maximum(
+                prob_map[mask_transition],
+                base_prob + (dense_prob - base_prob) * transition_factor
+            )
+    
+    # Apply Gaussian blur for smoothing/smearing
+    # Only blur within California to avoid edge artifacts
+    prob_map_blurred = gaussian_filter(prob_map, sigma=2)
+    
+    # Apply blur only within California
+    prob_map[ca_mask == 1] = prob_map_blurred[ca_mask == 1]
+    
+    # Ensure minimum probability within California
+    prob_map[ca_mask == 1] = np.maximum(prob_map[ca_mask == 1], min_prob)
+    
+    return prob_map
+
+
+def create_grid(p_tree=1, seed=None, use_realistic_vegetation=True, year=2020):
     """
     Create a simulation grid with vegetation and initial fires.
     
     Args:
-        p_tree: Probability of a tree in each cell (vegetation density)
+        p_tree: Overall vegetation density scaling factor (0-1)
         seed: Random seed for reproducibility
+        use_realistic_vegetation: If True, use spatially-varying vegetation based on dense areas
+        year: Year to use for dense vegetation data (2017-2020)
     
     Returns:
         grid: NxN array with EMPTY, TREE, and BURNING cells
@@ -74,13 +179,37 @@ def create_grid(p_tree=0.6, seed=None):
     
     # Add vegetation only inside California
     inside_ca = ca_mask == 1
-    n_cells = inside_ca.sum()
     
-    grid[inside_ca] = np.random.choice(
-        [EMPTY, TREE],
-        size=n_cells,
-        p=[1 - p_tree, p_tree]
-    )
+    if use_realistic_vegetation:
+        # Load dense vegetation areas
+        dense_coords, radius_deg = load_dense_areas(year=year, threshold=10.0)
+        
+        # Create spatially-varying probability map
+        # Use p_tree as overall scaling factor applied to the final map
+        prob_map = create_vegetation_probability_map(
+            ca_mask, bounds, dense_coords, radius_deg,
+            base_prob=0.8,   # Base areas have dense vegetation
+            dense_prob=1.0,   # Dense areas are fully covered  
+            min_prob=0.8     # Ensure dense minimum vegetation everywhere
+        )
+        
+        # Scale entire probability map by p_tree parameter
+        prob_map = prob_map * p_tree
+        
+        # Sample vegetation based on probability map
+        random_vals = np.random.random((N, N))
+        grid[inside_ca] = (random_vals[inside_ca] < prob_map[inside_ca]).astype(int)
+        
+        if dense_coords is not None:
+            print(f"Using realistic vegetation distribution from {year} with {len(dense_coords)} dense areas")
+    else:
+        # Original uniform distribution
+        n_cells = inside_ca.sum()
+        grid[inside_ca] = np.random.choice(
+            [EMPTY, TREE],
+            size=n_cells,
+            p=[1 - p_tree, p_tree]
+        )
     
     # Add initial fire points
     grid[fire_mask == BURNING] = BURNING

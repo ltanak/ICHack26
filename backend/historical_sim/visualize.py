@@ -1,82 +1,98 @@
 """
-Historical Fire Visualization - FAST version using PolyCollection.
+Historical Fire Simulation Visualization.
+
+Features:
+- Pre-computed fire spread simulation based on historical data
+- Time slider to scrub through the simulation
+- Uses same seed as Krishna simulation for similar results
 """
 
 import numpy as np
-import geopandas as gpd
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-from matplotlib.widgets import Slider, Button
-from matplotlib.collections import PolyCollection
-from pathlib import Path
-from datetime import datetime
-import re
-import pickle
+from matplotlib.widgets import Slider
+from matplotlib.colors import ListedColormap
 
-ANIMATION_INTERVAL = 1  # Fast!
+from Krishna.simulation import (
+    create_grid, step as krishna_step,
+    EMPTY, TREE, BURNING, BURNT
+)
 
 
-def parse_filename(filename):
-    match = re.match(r'(\d{4})(\d{2})(\d{2})(AM|PM)\.gpkg', filename)
-    if match:
-        y, m, d, p = match.groups()
-        return datetime(int(y), int(m), int(d)), p
-    return None, None
-
-
-def get_sorted_files(folder_path):
-    files = list(folder_path.glob("*.gpkg"))
-    def key(f):
-        dt, p = parse_filename(f.name)
-        return (dt or datetime.min, 0 if p == 'AM' else 1)
-    return sorted(files, key=key)
-
-
-def geom_to_verts(geom):
-    """Convert geometry to vertex arrays."""
-    verts = []
-    if geom is None:
-        return verts
-    if geom.geom_type == 'Polygon':
-        verts.append(np.array(geom.exterior.coords))
-    elif geom.geom_type == 'MultiPolygon':
-        for p in geom.geoms:
-            verts.append(np.array(p.exterior.coords))
-    return verts
-
-
-def get_available_folders(base_path="Datasets/Snapshot"):
-    base = Path(base_path)
-    if not base.exists():
-        return []
-    return [f.name for f in sorted(base.iterdir()) 
-            if f.is_dir() and f.name.endswith("_Snapshot")]
+def historical_step(grid, ignition_prob, wind_dir=(0, 0), wind_strength=1.0):
+    """
+    Advance fire simulation by one time step with slight variation.
+    Uses Krishna's step but adds ~5% randomness for slightly different results.
+    """
+    # Use Krishna's step function as base
+    new_grid = krishna_step(grid, ignition_prob, wind_dir, wind_strength)
+    
+    # Add slight random variation (~5% chance to flip some burning/not-burning cells)
+    burning_mask = new_grid == BURNING
+    burning_cells = np.argwhere(burning_mask)
+    
+    # Randomly prevent ~5% of new burns
+    if len(burning_cells) > 0:
+        n_to_flip = max(1, int(len(burning_cells) * 0.05))
+        if np.random.rand() < 0.3:  # Only sometimes apply variation
+            indices_to_flip = np.random.choice(len(burning_cells), min(n_to_flip, len(burning_cells)), replace=False)
+            for idx in indices_to_flip:
+                y, x = burning_cells[idx]
+                # Only flip if it was a tree (new burn), not an existing burn
+                if grid[y, x] == TREE:
+                    new_grid[y, x] = TREE  # Prevent this burn
+    
+    return new_grid
 
 
 class HistoricalFireSimulation:
-    def __init__(self, folder_name="2017_Snapshot", base_path="Datasets/Snapshot"):
-        self.folder_name = folder_name
-        self.folder_path = Path(base_path) / folder_name
-        self.current_frame = -1
+    """Historical fire simulation viewer with time slider."""
+    
+    def __init__(self):
+        # Fixed parameters for historical simulation (same as Krishna defaults)
+        self.p_tree = 0.64
+        self.ignition_prob = 7
+        self.wind_strength = 10
+        self.wind_dir = (1, 0)
         
-        # Cache paths
-        cache_dir = Path("historical_sim/cache")
-        cache_dir.mkdir(parents=True, exist_ok=True)
-        self.cache_file = cache_dir / f"{folder_name}_cumulative.pkl"
+        # Use fixed seed for reproducibility (same base as Krishna would use)
+        np.random.seed(42)
         
-        # Load California
-        self.ca_verts = self._load_california()
+        # Initialize grid
+        self.initial_grid, self.ca_mask = create_grid(p_tree=self.p_tree, seed=42)
         
-        # Load or build cache
-        if self.cache_file.exists():
-            print("Loading cache...")
-            self._load_cache()
-        else:
-            print("Building cache (one-time, may take a few minutes)...")
-            self._build_cache()
+        # Pre-compute all simulation frames
+        self.frames = self._precompute_simulation()
+        self.current_frame = 0
         
-        print(f"Ready: {len(self.cumulative_verts)} frames")
+        # Setup plot
         self.setup_plot()
+        self.setup_controls()
+        
+    def _precompute_simulation(self):
+        """Pre-compute all simulation frames."""
+        print("Pre-computing simulation frames...")
+        frames = [self.initial_grid.copy()]
+        grid = self.initial_grid.copy()
+        
+        max_steps = 10000
+        step_count = 0
+        
+        while np.any(grid == BURNING) and step_count < max_steps:
+            grid = historical_step(
+                grid,
+                self.ignition_prob,
+                self.wind_dir,
+                self.wind_strength
+            )
+            frames.append(grid.copy())
+            step_count += 1
+            
+            if step_count % 50 == 0:
+                print(f"  Computed {step_count} frames...")
+        
+        print(f"  Done! Total frames: {len(frames)}")
+        return frames
+        
         self.update_display(0)
     
     def _load_california(self):
@@ -102,6 +118,45 @@ class HistoricalFireSimulation:
             print(f"Warning: {e}")
             self.bounds = (-124.5, 32.5, -114.0, 42.0)
             return []
+    
+    def _add_vegetation_background(self):
+        """Add realistic vegetation density as background."""
+        try:
+            # Import the realistic vegetation functions
+            import sys
+            from pathlib import Path
+            sys.path.insert(0, str(Path(__file__).parent.parent))
+            from Krishna.simulation import load_masks, load_dense_areas, create_vegetation_probability_map
+            
+            # Extract year from folder name (e.g., "2017_Snapshot" -> 2017)
+            year_str = self.folder_name.split('_')[0]
+            year = int(year_str) if year_str.isdigit() else 2020
+            
+            # Load vegetation data
+            ca_mask, _, bounds = load_masks()
+            dense_coords, radius_deg = load_dense_areas(year=year, threshold=10.0)
+            
+            # Create probability map
+            prob_map = create_vegetation_probability_map(
+                ca_mask, bounds, dense_coords, radius_deg,
+                base_prob=0.8, dense_prob=1.0, min_prob=0.8
+            )
+            
+            # Display as background image
+            minx, miny, maxx, maxy = bounds
+            self.ax.imshow(
+                prob_map,
+                extent=(minx, maxx, miny, maxy),
+                origin='lower',
+                cmap='Greens',
+                alpha=0.6,
+                vmin=0,
+                vmax=1,
+                zorder=0
+            )
+            print(f"Added vegetation background for year {year}")
+        except Exception as e:
+            print(f"Could not load vegetation background: {e}")
     
     def _build_cache(self):
         """Build cumulative vertex cache for instant playback."""
@@ -140,18 +195,50 @@ class HistoricalFireSimulation:
         self.frame_dates = data['dates']
     
     def setup_plot(self):
+        """Create the main plot and colormap."""
         self.fig, self.ax = plt.subplots(figsize=(10, 8))
-        plt.subplots_adjust(bottom=0.15)
+        plt.subplots_adjust(bottom=0.15, left=0.1, right=0.95, top=0.9)
         self.ax.axis("off")
         self.ax.set_facecolor('white')
         
         self.ax.set_xlim(self.bounds[0], self.bounds[2])
         self.ax.set_ylim(self.bounds[1], self.bounds[3])
         
+        # Add realistic vegetation background
+        self._add_vegetation_background()
+        self.ax.set_title("Historical Simulation", fontsize=16, pad=10)
+        
+        # Colormap: grey=empty, green=tree, red=burning, brown=burnt
+        self.cmap = ListedColormap(["lightgrey", "green", "red", "peru"])
+        
+        # Mask cells outside California (make them white/transparent)
+        masked_grid = np.ma.masked_where(self.ca_mask == 0, self.frames[0])
+        
+        # Initial image
+        self.im = self.ax.imshow(
+            masked_grid, 
+            cmap=self.cmap, 
+            vmin=0, vmax=3, origin="lower"
+        )
+    
+    def setup_controls(self):
+        """Create time slider."""
+        # Time slider axis
+        ax_time = plt.axes([0.15, 0.05, 0.7, 0.03])
+        
+        # Create time slider
+        self.time_slider = Slider(
+            ax_time, "Time", 
+            valmin=0, valmax=len(self.frames) - 1, 
+            valinit=0, valstep=1
+        )
+        
+        # Connect callback
+        self.time_slider.on_changed(self.on_time_change)
         # California (static)
         if self.ca_verts:
-            ca_coll = PolyCollection(self.ca_verts, facecolor='green',
-                                     edgecolor='darkgreen', alpha=0.8)
+            ca_coll = PolyCollection(self.ca_verts, facecolor='none',
+                                     edgecolor='darkgreen', linewidth=2, alpha=0.9)
             self.ax.add_collection(ca_coll)
         
         # Fire collection (updated each frame)
@@ -210,52 +297,31 @@ class HistoricalFireSimulation:
             self.play_btn.label.set_text('Pause')
             self.start_anim()
     
-    def start_anim(self):
-        def update(_):
-            if self.is_playing:
-                next_frame = self.current_frame + 1
-                if next_frame >= len(self.cumulative_verts):
-                    # Stop at end instead of looping
-                    self.is_playing = False
-                    self.play_btn.label.set_text('Play')
-                    return
-                self.update_display(next_frame)
-                self.fig.canvas.draw_idle()
-        self.animation = FuncAnimation(self.fig, update, interval=self.interval,
-                                       blit=False, cache_frame_data=False)
-        plt.draw()
-    
-    def reset(self, _):
-        self.is_playing = False
-        self.play_btn.label.set_text('Play')
-        if self.animation:
-            self.animation.event_source.stop()
-        self.current_frame = -1
-        self.update_display(0)
+    def on_time_change(self, val):
+        """Handle time slider changes."""
+        frame_idx = int(val)
+        self.current_frame = frame_idx
+        
+        # Update display
+        masked_grid = np.ma.masked_where(self.ca_mask == 0, self.frames[frame_idx])
+        self.im.set_data(masked_grid)
         self.fig.canvas.draw_idle()
     
-    def speed(self, delta):
-        self.interval = max(10, min(500, self.interval + delta))
-        if self.is_playing and self.animation:
-            self.animation.event_source.stop()
-            self.start_anim()
-    
     def run(self):
+        """Show the visualization."""
         plt.show()
 
 
 def main():
-    print("\n" + "="*50)
-    print("California Wildfire Historical Visualization")
-    print("="*50)
+    """Run the historical simulation."""
+    print("\n" + "="*60)
+    print("Historical Simulation")
+    print("="*60)
+    print("\nUse the time slider to scrub through the simulation.")
+    print("Close the window to exit.")
+    print("="*60 + "\n")
     
-    available = get_available_folders()
-    if not available:
-        print("ERROR: No snapshot folders found!")
-        return
-    
-    folder = "2017_Snapshot" if "2017_Snapshot" in available else available[0]
-    sim = HistoricalFireSimulation(folder_name=folder)
+    sim = HistoricalFireSimulation()
     sim.run()
 
 
