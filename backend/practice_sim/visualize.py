@@ -248,8 +248,8 @@ MONTE_CARLO_RUNS = 20
 # Wind directions
 WIND_DIRS = {
     "None": (0, 0),
-    "Up": (1, 0),
-    "Down": (-1, 0),
+    "Up": (-1, 0),
+    "Down": (1, 0),
     "Left": (0, -1),
     "Right": (0, 1),
 }
@@ -260,10 +260,10 @@ class FireSimulation:
     
     def __init__(self):
         # Initial parameters
-        self.p_tree = 0.63
-        self.ignition_prob = 6.8
-        self.wind_strength = 9.5
-        self.wind_dir = (1, 0)
+        self.p_tree = 0.6
+        self.ignition_prob = 0.7
+        self.wind_strength = 1.0
+        self.wind_dir = (0, 0)
         self.mode = "Historic Run"
         self.monte_carlo_enabled = False  # Track if Monte Carlo is enabled
         
