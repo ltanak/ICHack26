@@ -50,6 +50,8 @@ def apply_transparency(image_1_path: Path, image_2_path: Path, year: int, alpha:
     output_name = f"{year}_overlay.png"
     
     imgEditor = ImageEditor(image_1_path, image_2_path)
+    print(image_1_path)
+    print(image_2_path)
     imgEditor.transparency(alpha=alpha, output_name=output_name, output_dir=output_dir)
 
 if __name__ == "__main__":
