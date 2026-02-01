@@ -1,7 +1,37 @@
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { Button } from "antd";
+import { useState, useEffect } from "react";
 
 export default function Sidebar({ collapsed, setCollapsed }) {
+    const [snapshots, setSnapshots] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const year = 2017;
+    const API_BASE = 'http://127.0.0.1:5001';
+
+    useEffect(() => {
+        // Fetch available snapshots
+        fetch(`${API_BASE}/snapshots?year=${year}`)
+            .then(res => res.json())
+            .then(data => setSnapshots(data.snapshots))
+            .catch(err => console.error('Error fetching snapshots:', err));
+    }, []);
+
+    useEffect(() => {
+        if (snapshots.length === 0) return;
+
+        // Loop through snapshots every 800ms
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % snapshots.length);
+        }, 800);
+
+        return () => clearInterval(interval);
+    }, [snapshots]);
+
+    const currentSnapshot = snapshots[currentIndex];
+    const imageUrl = currentSnapshot 
+        ? `${API_BASE}/satellite?year=${year}&snapshot=${currentSnapshot}`
+        : `${API_BASE}/satellite?year=${year}`;
+
     return (
         <div className={`flex flex-col items-end px-4 py-6 transition-all duration-300 mr-2`}>
             <Button 
@@ -29,11 +59,19 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                 <div>
                     <h2 className="text-2xl"><strong>Summary</strong></h2>
                     <p className="text-lg">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean porttitor magna eget tempus tristique. Suspendisse commodo arcu lacus, id iaculis elit aliquam non. Sed interdum dignissim turpis, vitae cursus neque volutpat eget. Aliquam vitae efficitur mauris. Integer ullamcorper, diam vitae pharetra tristique, lorem lorem lacinia diam, a cursus libero metus a felis. Sed luctus venenatis pellentesque. Donec sed nunc eget nunc placerat lobortis. Donec fringilla leo dolor, quis faucibus enim imperdiet sed. In fermentum libero ipsum, eget convallis eros gravida et. Aliquam ex massa, bibendum non rutrum vel, posuere mollis ante. Nam congue laoreet dictum. Nulla quis neque imperdiet, fringilla lacus ac, iaculis mi. Nunc laoreet lacinia feugiat. Aliquam nec rhoncus nisi, a malesuada velit.</p>
-                    <img
-                    src="http://127.0.0.1:5000/satellite"
-                    alt="Satellite view"
-                    className="w-full h-auto"
-                    />
+                    <div className="relative">
+                        <img
+                            src={imageUrl}
+                            alt="Satellite view"
+                            className="w-full h-auto"
+                            style={{ imageRendering: 'auto' }}
+                        />
+                        {snapshots.length > 0 && (
+                            <div className="text-sm mt-2 text-gray-600">
+                                Frame {currentIndex + 1} / {snapshots.length} - {currentSnapshot}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
