@@ -11,6 +11,7 @@ from markupsafe import escape
 from typing import List
 import io
 import base64
+import time
 import matplotlib.pyplot as plt
 from Krishna.visualize import FireSimulation
 import uuid
