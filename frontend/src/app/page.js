@@ -1,9 +1,9 @@
 "use client"
 
-import { Button, Layout, Menu } from "antd";
+import { Layout } from "antd";
 import { useState } from "react";
 import MapChart from "../components/MapChart";
-import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import Sidebar from "@/components/Sidebar";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -12,10 +12,8 @@ export default function Home() {
 
   return (
     <Layout>
-      <Sider trigger={null}collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} className="!bg-stone-200">
-        <div className={`flex flex-col items-end px-4 py-6 transition-all duration-300 mr-2`}>
-          <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
-        </div>
+      <Sider trigger={null} width={650} collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} className="!bg-stone-200 shadow-2xl!">
+        <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       </Sider>
       <Layout>
         <Content>

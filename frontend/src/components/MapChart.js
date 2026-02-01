@@ -3,25 +3,13 @@
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
 import { useState, useEffect } from "react";
 import { geoMercator } from "d3-geo";
+import { useGetPointsQuery } from "../store/api";
 
 export default function MapChart() {
     const [centre, setCentre] = useState([0, 0]);
     const [zoom, setZoom] = useState(1);
-    const [markers, setMarkers] = useState([]);
+    const { data: markers, error, isLoading } = useGetPointsQuery();
     const [hoveredMarker, setHoveredMarker] = useState(null);
-    
-    useEffect(() => {
-        const fetchPoints = async () => {
-            try {
-            const res = await fetch("http://127.0.0.1:5000/points");
-            const data = await res.json();
-            setMarkers(data);
-            } catch (err) {
-            console.error("Error loading points:", err);
-            }
-        };
-        fetchPoints();
-    }, []);
     
     // Map configuration
     const width = 800; // your SVG width
@@ -53,7 +41,10 @@ export default function MapChart() {
         const clampedLat = Math.max(worldBottom + latPadding, Math.min(worldTop - latPadding, center[1]));
 
         return [clampedLng, clampedLat];
-        };
+    };
+
+    if (isLoading) return <div>Loading map...</div>;
+    if (error) return <div>Error loading map data</div>;
 
     return (
         <div className="flex items-center justify-center overflow-hidden">
@@ -64,13 +55,19 @@ export default function MapChart() {
                 projectionConfig={{
                     scale: projectionScale,
                 }}
+                width={800}
+                height={600}
                 // className="block"
                 style={{ display: "block", width: "100%", height: "130%" }}
                 >
                     <ZoomableGroup
                         center={centre}
                         minZoom={1}
-                        maxZoom={4}             // adjust max zoom
+                        maxZoom={4}
+                        translateExtent={[
+                            [0, 0],       // top-left corner
+                            [800, 600],   // bottom-right corner (SVG size)
+                        ]}
                         onMove={({ coordinates, zoom }) => {
                             setZoom(zoom);
                             if (!coordinates) return;
@@ -86,7 +83,7 @@ export default function MapChart() {
                                 geography={geo}
                                 fill="var(--map-fill)"
                                 stroke="var(--map-stroke)"
-                                    style={{
+                                style={{
                                     default: { outline: "none" },
                                     hover: { outline: "none" },
                                     pressed: { outline: "none" },
@@ -111,10 +108,10 @@ export default function MapChart() {
                                     <text 
                                         textAnchor="middle" 
                                         y={markerOffset * scale}
-                                        className={`font-semibold text-black transition-all duration-300 ${hoveredMarker === name ? "opacity-100" : "opacity-0"}`}
+                                        className={`font-semibold text-black bg-stone-100 rounded-md transition-all duration-300 ${hoveredMarker === name ? "opacity-100" : "opacity-0"}`}
                                         style={{ fontSize: 12 * scale }}
                                     >
-                                    {name}
+                                        {name}
                                     </text>
                                 </Marker>
                             )

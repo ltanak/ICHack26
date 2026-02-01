@@ -3,8 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --map-fill: #EAEAEC;
-  --map-stroke: #D6D6DA;
+  --map-fill: oklch(96.2% 0.044 156.743);
+  --map-stroke: oklch(49.56% 0.03803 161.17);
 }
 
 @theme inline {
