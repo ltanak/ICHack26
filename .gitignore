@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 *.pyo
 /backend/pixi.lock
+backend/historical_sim/cache/2017_Snapshot_cumulative.pkl

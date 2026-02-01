@@ -2,6 +2,7 @@ import { Divider } from "antd";
 import { useSelector } from "react-redux";
 import WildfireSummary from "./WildfireSummary";
 import WildfireSimulation from "./WildfireSimulation";
+import WildfireMitigation from "./WildfireMitigation";
 
 export default function WildfireInfo() {
     const selectedPoint = useSelector((state) => state.points.selectedPoint);
@@ -25,10 +26,11 @@ export default function WildfireInfo() {
                 <img
                     src={`http://127.0.0.1:5001/satellite`}
                     alt="Satellite view"
-                    className="w-full h-auto"
+                    className="w-full h-auto px-16 pt-6 rounded-lg"
                 />
                 <WildfireSimulation gridMode={true}/>
             </div>
+            <WildfireMitigation />
         </div>
     );
 }
