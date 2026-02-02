@@ -10,7 +10,6 @@ __pycache__/
 /backend/Datasets/satellites/
 
 # Large cached/build files
-/backend/.pixi/
 /backend/Datasets/
 /backend/historical_sim/cache/
 /frontend/.next/
